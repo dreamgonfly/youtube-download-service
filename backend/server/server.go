@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"youtube-download-backend/config"
 	"youtube-download-backend/extract"
 	"youtube-download-backend/storage"
 	"youtube-download-backend/videodownload"
@@ -137,7 +138,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		}
 
 		key := path.Join("videos", id, path.Base(description))
-		uri := storage.ComposeURI("gs", "youtube-download-backend-beta", key)
+		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(description, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
@@ -146,7 +147,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 		key = path.Join("videos", id, path.Base(info))
-		uri = storage.ComposeURI("gs", "youtube-download-backend-beta", key)
+		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(info, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
@@ -155,7 +156,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 		key = path.Join("videos", id, path.Base(thumbnail))
-		uri = storage.ComposeURI("gs", "youtube-download-backend-beta", key)
+		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(info, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
@@ -200,7 +201,7 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			return
 		}
 		key := path.Join("videos", id, path.Base(video))
-		uri := storage.ComposeURI("gs", "youtube-download-backend-beta", key)
+		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(video, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload video")

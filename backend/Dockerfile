@@ -40,6 +40,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/serve .
+COPY --from=builder /app/configs configs
 
 # Install youtube-dl
 RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl
