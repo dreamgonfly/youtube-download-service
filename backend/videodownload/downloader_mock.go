@@ -10,32 +10,31 @@ import (
 
 type DownloaderMock struct{}
 
-func (d *DownloaderMock) Preview(id string, dir string) (description string, info string, thumbnail string, err error) {
-	if id == "x5TLTSGrn_M" {
-		descname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.description"
-		infoname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.info.json"
-		thumbnailname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.webp"
+func (d *DownloaderMock) GetName(id string) (name string, err error) {
+	return "[기생충] 30초 예고", nil
+}
+
+func (d *DownloaderMock) Preview(id, name, dir string) (description string, info string, err error) {
+	if id == "GSVsfCCtRr0" {
+		descname := "[기생충] 30초 예고.description"
+		infoname := "[기생충] 30초 예고.info.json"
 		err = copyFileContents(filepath.Join("../testdata", descname), filepath.Join(dir, descname))
 		if err != nil {
-			return "", "", "", errors.Wrap(err, "could not copy file contents")
+			return "", "", errors.Wrap(err, "could not copy file contents")
 		}
 		err = copyFileContents(filepath.Join("../testdata", infoname), filepath.Join(dir, infoname))
 		if err != nil {
-			return "", "", "", errors.Wrap(err, "could not copy file contents")
+			return "", "", errors.Wrap(err, "could not copy file contents")
 		}
-		err = copyFileContents(filepath.Join("../testdata", thumbnailname), filepath.Join(dir, thumbnailname))
-		if err != nil {
-			return "", "", "", errors.Wrap(err, "could not copy file contents")
-		}
-		return filepath.Join(dir, descname), filepath.Join(dir, infoname), filepath.Join(dir, thumbnailname), nil
+		return filepath.Join(dir, descname), filepath.Join(dir, infoname), nil
 	} else {
-		return "", "", "", errors.New("unable to mock")
+		return "", "", errors.New("unable to mock")
 	}
 }
 
 func (d *DownloaderMock) Download(id string, format_code string, dir string) (video string, err error) {
-	if id == "x5TLTSGrn_M" && format_code == "22" {
-		videoname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.mp4"
+	if id == "GSVsfCCtRr0" && format_code == "18" {
+		videoname := "[기생충] 30초 예고_360p.mp4"
 		err := copyFileContents(filepath.Join("../testdata", videoname), filepath.Join(dir, videoname))
 		if err != nil {
 			return "", errors.Wrap(err, "could not copy file contents")

@@ -43,7 +43,7 @@ func TestHandlePreview(t *testing.T) {
 	st := &storage.StorerMock{}
 	dw := &videodownload.DownloaderMock{}
 	srv := httptest.NewServer(server.NewServer(st, dw))
-	url := fmt.Sprintf("%s/preview/x5TLTSGrn_M", srv.URL)
+	url := fmt.Sprintf("%s/preview/GSVsfCCtRr0", srv.URL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatalf("could not create GET request: %v", err)
@@ -73,7 +73,7 @@ func TestHandlePreview(t *testing.T) {
 		t.Fatalf("could not read value: %v", err)
 	}
 	actual_formats := string(bytes.TrimSpace(value))
-	expected_formats := `[{"Filesize":8082004,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":9404913,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]`
+	expected_formats := `[{"Filesize":1348634,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":2059470,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]`
 	assert.Equal(t, expected_formats, actual_formats, "formats mismatch")
 
 	// Thumbnail Part
@@ -86,7 +86,7 @@ func TestHandlePreview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not read actual thumbnail: %v", err)
 	}
-	expected, err := os.ReadFile("../testdata/‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.webp")
+	expected, err := os.ReadFile("../testdata/[기생충] 30초 예고.jpg")
 	if err != nil {
 		t.Fatalf("could not read expected thumbnail: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestHandleDownload(t *testing.T) {
 	st := &storage.StorerMock{}
 	dw := &videodownload.DownloaderMock{}
 	srv := httptest.NewServer(server.NewServer(st, dw))
-	url := fmt.Sprintf("%s/download/x5TLTSGrn_M?format_code=22", srv.URL)
+	url := fmt.Sprintf("%s/download/GSVsfCCtRr0?format_code=18", srv.URL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatalf("could not create GET request: %v", err)
@@ -118,7 +118,7 @@ func TestHandleDownload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not read response: %v", err)
 	}
-	expected, err := os.ReadFile("../testdata/‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.mp4")
+	expected, err := os.ReadFile("../testdata/[기생충] 30초 예고_360p.mp4")
 	if err != nil {
 		t.Fatalf("could not read file: %v", err)
 	}
