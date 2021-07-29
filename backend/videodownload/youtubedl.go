@@ -13,7 +13,8 @@ type YoutubeDl struct{}
 func (y *YoutubeDl) Preview(id string, dir string) (description string, info string, thumbnail string, err error) {
 	args := []string{
 		"--skip-download",
-		"--output", path.Join(dir, "%(title)s.%(ext)s"),
+		// Output template: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#output-template
+		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--write-description",
 		"--write-info-json",
 		"--write-annotations",
@@ -28,7 +29,7 @@ func (y *YoutubeDl) Preview(id string, dir string) (description string, info str
 
 	stdout, err := exec.Command(
 		"youtube-dl",
-		"--output", path.Join(dir, "%(title)s.%(ext)s"),
+		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--get-filename",
 		id,
 	).Output()
@@ -48,7 +49,7 @@ func (y *YoutubeDl) Download(id string, format_code string, dir string) (video s
 	args := []string{
 		"--format",
 		format_code,
-		"--output", path.Join(dir, "%(title)s.%(ext)s"),
+		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		id,
 	}
 	_, err = exec.Command("youtube-dl", args...).Output()
@@ -60,7 +61,7 @@ func (y *YoutubeDl) Download(id string, format_code string, dir string) (video s
 		"youtube-dl",
 		"--format",
 		format_code,
-		"--output", path.Join(dir, "%(title)s.%(ext)s"),
+		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--get-filename",
 		id,
 	).Output()
