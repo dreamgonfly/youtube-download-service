@@ -156,7 +156,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		}
 		key = filepath.Join("videos", id, filepath.Base(thumbnail))
 		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
-		err = s.storage.UploadFile(info, uri)
+		err = s.storage.UploadFile(thumbnail, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
 			// TODO: logging
