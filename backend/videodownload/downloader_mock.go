@@ -3,7 +3,7 @@ package videodownload
 import (
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -15,19 +15,19 @@ func (d *DownloaderMock) Preview(id string, dir string) (description string, inf
 		descname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.description"
 		infoname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.info.json"
 		thumbnailname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.webp"
-		err = copyFileContents(path.Join("../testdata", descname), path.Join(dir, descname))
+		err = copyFileContents(filepath.Join("../testdata", descname), filepath.Join(dir, descname))
 		if err != nil {
 			return "", "", "", errors.Wrap(err, "could not copy file contents")
 		}
-		err = copyFileContents(path.Join("../testdata", infoname), path.Join(dir, infoname))
+		err = copyFileContents(filepath.Join("../testdata", infoname), filepath.Join(dir, infoname))
 		if err != nil {
 			return "", "", "", errors.Wrap(err, "could not copy file contents")
 		}
-		err = copyFileContents(path.Join("../testdata", thumbnailname), path.Join(dir, thumbnailname))
+		err = copyFileContents(filepath.Join("../testdata", thumbnailname), filepath.Join(dir, thumbnailname))
 		if err != nil {
 			return "", "", "", errors.Wrap(err, "could not copy file contents")
 		}
-		return path.Join(dir, descname), path.Join(dir, infoname), path.Join(dir, thumbnailname), nil
+		return filepath.Join(dir, descname), filepath.Join(dir, infoname), filepath.Join(dir, thumbnailname), nil
 	} else {
 		return "", "", "", errors.New("unable to mock")
 	}
@@ -36,11 +36,11 @@ func (d *DownloaderMock) Preview(id string, dir string) (description string, inf
 func (d *DownloaderMock) Download(id string, format_code string, dir string) (video string, err error) {
 	if id == "x5TLTSGrn_M" && format_code == "22" {
 		videoname := "‘교도소 다녀오면 5억 줄게’…치밀한 범행 계획 _ KBS 2021.05.14.-x5TLTSGrn_M.mp4"
-		err := copyFileContents(path.Join("../testdata", videoname), path.Join(dir, videoname))
+		err := copyFileContents(filepath.Join("../testdata", videoname), filepath.Join(dir, videoname))
 		if err != nil {
 			return "", errors.Wrap(err, "could not copy file contents")
 		}
-		return path.Join(dir, videoname), nil
+		return filepath.Join(dir, videoname), nil
 	} else {
 		return "", errors.New("unable to mock")
 	}

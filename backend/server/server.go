@@ -8,7 +8,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 
@@ -122,7 +121,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		}
 
 		bytes, err := ioutil.ReadFile(thumbnail)
-		fw, err = mw.CreateFormFile("thumbnail", path.Base(thumbnail))
+		fw, err = mw.CreateFormFile("thumbnail", filepath.Base(thumbnail))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -137,7 +136,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 
-		key := path.Join("videos", id, path.Base(description))
+		key := filepath.Join("videos", id, filepath.Base(description))
 		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(description, uri)
 		if err != nil {
@@ -146,7 +145,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = path.Join("videos", id, path.Base(info))
+		key = filepath.Join("videos", id, filepath.Base(info))
 		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(info, uri)
 		if err != nil {
@@ -155,7 +154,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = path.Join("videos", id, path.Base(thumbnail))
+		key = filepath.Join("videos", id, filepath.Base(thumbnail))
 		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(info, uri)
 		if err != nil {
@@ -200,7 +199,7 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key := path.Join("videos", id, path.Base(video))
+		key := filepath.Join("videos", id, filepath.Base(video))
 		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
 		err = s.storage.UploadFile(video, uri)
 		if err != nil {

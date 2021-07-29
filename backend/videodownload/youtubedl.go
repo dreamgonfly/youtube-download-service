@@ -2,7 +2,7 @@ package videodownload
 
 import (
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -14,7 +14,7 @@ func (y *YoutubeDl) Preview(id string, dir string) (description string, info str
 	args := []string{
 		"--skip-download",
 		// Output template: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#output-template
-		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--write-description",
 		"--write-info-json",
 		"--write-annotations",
@@ -29,7 +29,7 @@ func (y *YoutubeDl) Preview(id string, dir string) (description string, info str
 
 	stdout, err := exec.Command(
 		"youtube-dl",
-		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--get-filename",
 		id,
 	).Output()
@@ -37,7 +37,7 @@ func (y *YoutubeDl) Preview(id string, dir string) (description string, info str
 		return "", "", "", errors.Wrap(err, "could not get filename")
 	}
 	filename := strings.TrimSpace(string(stdout))
-	ext := path.Ext(filename)
+	ext := filepath.Ext(filename)
 	basename := filename[:len(filename)-len(ext)] // filename except extention
 	description = strings.Join([]string{basename, ".description"}, "")
 	info = strings.Join([]string{basename, ".info.json"}, "")
@@ -49,7 +49,7 @@ func (y *YoutubeDl) Download(id string, format_code string, dir string) (video s
 	args := []string{
 		"--format",
 		format_code,
-		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		id,
 	}
 	_, err = exec.Command("youtube-dl", args...).Output()
@@ -61,7 +61,7 @@ func (y *YoutubeDl) Download(id string, format_code string, dir string) (video s
 		"youtube-dl",
 		"--format",
 		format_code,
-		"--output", path.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--get-filename",
 		id,
 	).Output()
