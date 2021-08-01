@@ -5,7 +5,6 @@ go 1.16
 require (
 	cloud.google.com/go/storage v1.16.0
 	github.com/gorilla/mux v1.8.0
-	github.com/gosimple/slug v1.10.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.8.1

@@ -15,15 +15,12 @@ import (
 	"strconv"
 	"strings"
 
-	. "youtube-download-backend/internal/config"
 	"youtube-download-backend/internal/extract"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/httpfile"
-	"youtube-download-backend/internal/storagepath"
 	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
-	"github.com/gosimple/slug"
 	"github.com/pkg/errors"
 )
 
@@ -187,9 +184,8 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 
-		key := filepath.Join("videos", id, slug.MakeLang(youtubefile.Stem(filepath.Base(description)), "en")+filepath.Ext(description))
-		uri := storagepath.ComposeURI("gs", Conf.Bucket, key)
-		err = gcs.UploadFile(s.context, s.gcsClient, description, uri)
+		key := filepath.Join("videos", id, filepath.Base(description))
+		err = gcs.UploadFile(s.context, s.gcsClient, description, key)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
 			log.Println(err)
@@ -197,9 +193,8 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = filepath.Join("videos", id, slug.MakeLang(youtubefile.Stem(filepath.Base(info)), "en")+filepath.Ext(info))
-		uri = storagepath.ComposeURI("gs", Conf.Bucket, key)
-		err = gcs.UploadFile(s.context, s.gcsClient, info, uri)
+		key = filepath.Join("videos", id, filepath.Base(info))
+		err = gcs.UploadFile(s.context, s.gcsClient, info, key)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
 			log.Println(err)
@@ -207,9 +202,8 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = filepath.Join("videos", id, slug.MakeLang(youtubefile.Stem(filepath.Base(thumbnailPath)), "en")+filepath.Ext(thumbnailPath))
-		uri = storagepath.ComposeURI("gs", Conf.Bucket, key)
-		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, uri)
+		key = filepath.Join("videos", id, filepath.Base(thumbnailPath))
+		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, key)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
 			log.Println(err)
@@ -257,9 +251,8 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key := filepath.Join("videos", id, slug.MakeLang(youtubefile.Stem(filepath.Base(video)), "en")+filepath.Ext(video))
-		uri := storagepath.ComposeURI("gs", Conf.Bucket, key)
-		err = gcs.UploadFile(s.context, s.gcsClient, video, uri)
+		key := filepath.Join("videos", id, filepath.Base(video))
+		err = gcs.UploadFile(s.context, s.gcsClient, video, key)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload video")
 			log.Println(err)
