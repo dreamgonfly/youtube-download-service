@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"mime"
@@ -10,17 +11,20 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"youtube-download-backend/server"
-	"youtube-download-backend/storage"
-	"youtube-download-backend/videodownload"
+	execmock "youtube-download-backend/internal/mock/exec"
+	gcsmock "youtube-download-backend/internal/mock/gcs"
+	httpmock "youtube-download-backend/internal/mock/http"
+	"youtube-download-backend/internal/server"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleHello(t *testing.T) {
-	st := &storage.StorerMock{}
-	dw := &videodownload.DownloaderMock{}
-	srv := httptest.NewServer(server.NewServer(st, dw))
+	ctx := context.Background()
+	c := execmock.Command
+	g := &gcsmock.Client{}
+	h := &httpmock.Client{}
+	srv := httptest.NewServer(server.NewServer(ctx, c, g, h))
 	res, err := http.Get(fmt.Sprintf("%s/hello", srv.URL))
 	if err != nil {
 		t.Fatalf("could not send GET request: %v", err)
@@ -40,9 +44,11 @@ func TestHandleHello(t *testing.T) {
 }
 
 func TestHandlePreview(t *testing.T) {
-	st := &storage.StorerMock{}
-	dw := &videodownload.DownloaderMock{}
-	srv := httptest.NewServer(server.NewServer(st, dw))
+	ctx := context.Background()
+	c := execmock.Command
+	g := &gcsmock.Client{}
+	h := &httpmock.Client{}
+	srv := httptest.NewServer(server.NewServer(ctx, c, g, h))
 	url := fmt.Sprintf("%s/preview/GSVsfCCtRr0", srv.URL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -86,7 +92,7 @@ func TestHandlePreview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not read actual thumbnail: %v", err)
 	}
-	expected, err := os.ReadFile("../testdata/[기생충] 30초 예고.jpg")
+	expected, err := os.ReadFile("../../testdata/[기생충] 30초 예고.jpg")
 	if err != nil {
 		t.Fatalf("could not read expected thumbnail: %v", err)
 	}
@@ -94,10 +100,12 @@ func TestHandlePreview(t *testing.T) {
 }
 
 func TestHandleDownload(t *testing.T) {
-	st := &storage.StorerMock{}
-	dw := &videodownload.DownloaderMock{}
-	srv := httptest.NewServer(server.NewServer(st, dw))
-	url := fmt.Sprintf("%s/download/GSVsfCCtRr0?format_code=18", srv.URL)
+	ctx := context.Background()
+	c := execmock.Command
+	g := &gcsmock.Client{}
+	h := &httpmock.Client{}
+	srv := httptest.NewServer(server.NewServer(ctx, c, g, h))
+	url := fmt.Sprintf("%s/download/GSVsfCCtRr0?format=18", srv.URL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatalf("could not create GET request: %v", err)
@@ -118,7 +126,7 @@ func TestHandleDownload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not read response: %v", err)
 	}
-	expected, err := os.ReadFile("../testdata/[기생충] 30초 예고_360p.mp4")
+	expected, err := os.ReadFile("../../testdata/[기생충] 30초 예고_360p.mp4")
 	if err != nil {
 		t.Fatalf("could not read file: %v", err)
 	}

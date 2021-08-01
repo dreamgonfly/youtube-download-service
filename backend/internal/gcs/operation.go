@@ -1,4 +1,4 @@
-package storage
+package gcs
 
 import (
 	"context"
@@ -6,30 +6,22 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"youtube-download-backend/internal/storagepath"
 
-	"cloud.google.com/go/storage"
 	"github.com/pkg/errors"
 )
 
-type GCS struct{}
-
 // https://cloud.google.com/storage/docs/downloading-objects#storage-download-object-go
-func (g *GCS) DownloadFile(uri string) ([]byte, error) {
-	scheme, bucket, key, err := ParseURI(uri)
+func DownloadFile(ctx context.Context, client Clienter, uri string) ([]byte, error) {
+	scheme, bucket, key, err := storagepath.ParseURI(uri)
 	if err != nil {
 		return nil, errors.Wrap(err, "error parsing uri")
 	}
 	if scheme != "gs" {
 		return nil, errors.New("scheme should be gs")
 	}
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "storage.NewClient")
-	}
-	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(ctx, time.Hour*2)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Hour)
 	defer cancel()
 
 	rc, err := client.Bucket(bucket).Object(key).NewReader(ctx)
@@ -46,20 +38,14 @@ func (g *GCS) DownloadFile(uri string) ([]byte, error) {
 }
 
 // https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-go
-func (g *GCS) UploadFile(path string, uri string) error {
-	scheme, bucket, key, err := ParseURI(uri)
+func UploadFile(ctx context.Context, client Clienter, path, uri string) error {
+	scheme, bucket, key, err := storagepath.ParseURI(uri)
 	if err != nil {
 		return errors.Wrap(err, "error parsing uri")
 	}
 	if scheme != "gs" {
 		return errors.New("scheme should be gs")
 	}
-	ctx := context.Background()
-	client, err := storage.NewClient(ctx)
-	if err != nil {
-		return errors.Wrap(err, "storage.NewClient")
-	}
-	defer client.Close()
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -67,7 +53,7 @@ func (g *GCS) UploadFile(path string, uri string) error {
 	}
 	defer f.Close()
 
-	ctx, cancel := context.WithTimeout(ctx, time.Hour*2)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Hour)
 	defer cancel()
 
 	wc := client.Bucket(bucket).Object(key).NewWriter(ctx)

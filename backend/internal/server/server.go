@@ -1,20 +1,26 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
-	"youtube-download-backend/config"
-	"youtube-download-backend/extract"
-	"youtube-download-backend/storage"
-	"youtube-download-backend/videodownload"
+	. "youtube-download-backend/internal/config"
+	"youtube-download-backend/internal/extract"
+	"youtube-download-backend/internal/gcs"
+	"youtube-download-backend/internal/httpfile"
+	"youtube-download-backend/internal/storagepath"
+	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -22,16 +28,20 @@ import (
 
 type Server struct {
 	router     *mux.Router
-	storage    storage.Storer
-	downloader videodownload.Downloader
+	context    context.Context
+	youtubedl  youtubefile.YoutubeDl
+	gcsClient  gcs.Clienter
+	httpClient httpfile.Clienter
 }
 
-func NewServer(st storage.Storer, dw videodownload.Downloader) *Server {
-	router := mux.NewRouter()
+func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h httpfile.Clienter) *Server {
+	r := mux.NewRouter()
 	s := &Server{
-		router:     router,
-		storage:    st,
-		downloader: dw,
+		router:     r,
+		context:    ctx,
+		youtubedl:  youtubefile.YoutubeDl{ExecCommand: c},
+		gcsClient:  g,
+		httpClient: h,
 	}
 	s.routes()
 	return s
@@ -54,11 +64,13 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		id := params["id"]
 		if id == "" {
 			err := errors.New("video id not provided")
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 		mediatype, _, err := mime.ParseMediaType(r.Header.Get("Accept"))
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusNotAcceptable)
 			return
 		}
@@ -71,15 +83,25 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		if err != nil {
 			err = errors.Wrap(err, "could not create temp dir")
 			// TODO: logging
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer os.RemoveAll(tempDir)
 
-		description, info, thumbnail, err := s.downloader.Preview(id, tempDir)
+		name, err := s.youtubedl.GetName(id)
+		if err != nil {
+			err = errors.Wrap(err, "could not get name")
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		description, info, err := s.youtubedl.Preview(id, name, tempDir)
 		if err != nil {
 			err = errors.Wrap(err, "could not download preview")
 			// TODO: logging
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -87,6 +109,33 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		if err != nil {
 			err = errors.Wrap(err, "could not extract formats")
 			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		thumbnails, err := extract.ExtractThumbnails(info)
+		if err != nil {
+			err = errors.Wrap(err, "could not extract thumbnails")
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		last_thumbnail := thumbnails[len(thumbnails)-1]
+		u, err := url.Parse(last_thumbnail.URL)
+		if err != nil {
+			err = errors.Wrapf(err, "could not parse thumbnail url (%s)", last_thumbnail.URL)
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		thumbnailPath := filepath.Join(tempDir, strings.Join([]string{name, filepath.Ext(u.Path)}, ""))
+		err = httpfile.DownloadFile(s.httpClient, last_thumbnail.URL, thumbnailPath)
+		if err != nil {
+			err = errors.Wrapf(err, "could not download thumbnail url (%s)", last_thumbnail.URL)
+			// TODO: logging
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -111,54 +160,62 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		w.Header().Set("Content-Type", mw.FormDataContentType())
 		fw, err := mw.CreateFormField("formats")
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		err = json.NewEncoder(fw).Encode(estimatedFormats)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		bytes, err := ioutil.ReadFile(thumbnail)
-		fw, err = mw.CreateFormFile("thumbnail", filepath.Base(thumbnail))
+		bytes, err := ioutil.ReadFile(thumbnailPath)
+		fw, err = mw.CreateFormFile("thumbnail", filepath.Base(thumbnailPath))
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		_, err = fw.Write(bytes)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if err := mw.Close(); err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		key := filepath.Join("videos", id, filepath.Base(description))
-		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
-		err = s.storage.UploadFile(description, uri)
+		uri := storagepath.ComposeURI("gs", Conf.Bucket, key)
+		err = gcs.UploadFile(s.context, s.gcsClient, description, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		key = filepath.Join("videos", id, filepath.Base(info))
-		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
-		err = s.storage.UploadFile(info, uri)
+		uri = storagepath.ComposeURI("gs", Conf.Bucket, key)
+		err = gcs.UploadFile(s.context, s.gcsClient, info, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = filepath.Join("videos", id, filepath.Base(thumbnail))
-		uri = storage.ComposeURI("gs", config.CONFIG.Bucket, key)
-		err = s.storage.UploadFile(thumbnail, uri)
+		key = filepath.Join("videos", id, filepath.Base(thumbnailPath))
+		uri = storagepath.ComposeURI("gs", Conf.Bucket, key)
+		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -173,12 +230,14 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		id := params["id"]
 		if id == "" {
 			err := errors.New("video id is missing")
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		formatCodes, ok := r.URL.Query()["format_code"]
+		formatCodes, ok := r.URL.Query()["format"]
 		if !ok || len(formatCodes[0]) < 1 {
-			http.Error(w, "format code is missing", http.StatusBadRequest)
+			log.Println("format is missing")
+			http.Error(w, "format is missing", http.StatusBadRequest)
 			return
 		}
 		formatCode := formatCodes[0]
@@ -186,24 +245,30 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		tempDir, err := ioutil.TempDir("", "")
 		if err != nil {
 			err = errors.Wrap(err, "could not create temp dir")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer os.RemoveAll(tempDir)
 
-		video, err := s.downloader.Download(id, formatCode, tempDir)
+		video, err := s.youtubedl.Download(id, formatCode, tempDir)
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		key := filepath.Join("videos", id, filepath.Base(video))
-		uri := storage.ComposeURI("gs", config.CONFIG.Bucket, key)
-		err = s.storage.UploadFile(video, uri)
+		uri := storagepath.ComposeURI("gs", Conf.Bucket, key)
+		log.Println("video", video)
+		
+		log.Println("uri", uri)
+		err = gcs.UploadFile(s.context, s.gcsClient, video, uri)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload video")
+			log.Println(err)
 			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
