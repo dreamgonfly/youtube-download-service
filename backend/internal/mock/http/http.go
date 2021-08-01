@@ -33,6 +33,15 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 			StatusCode: 200,
 			Body:       f,
 		}, nil
+	} else if req.URL.Path == "/vi_webp/-BIDXOp6_LA/maxresdefault.webp" {
+		f, err := os.Open(filepath.Join(config.RootDir, "testdata", "Go Modules - Dependency Management the Right Way.webp"))
+		if err != nil {
+			return nil, err
+		}
+		return &http.Response{
+			StatusCode: 200,
+			Body:       f,
+		}, nil
 	} else {
 		return nil, errors.New(fmt.Sprintf("could not mock %s", req.URL.Path))
 	}

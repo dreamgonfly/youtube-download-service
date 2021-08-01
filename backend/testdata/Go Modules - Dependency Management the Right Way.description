@@ -1,0 +1,1 @@
+In this webinar, we'll look at Go modules and why it is such an improvement over vendoring, we'll show you why dependency management is so important, and we'll build a CI/CD pipeline specifically for your Go projects using GoCenter!
