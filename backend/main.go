@@ -35,7 +35,8 @@ func run() error {
 	defer gcsClient.Close()
 	g := &gcs.Client{Client: gcsClient}
 	h := http.DefaultClient
-	srv := server.NewServer(ctx, c, g, h)
+	sf := storage.SignedURL
+	srv := server.NewServer(ctx, c, g, h, sf)
 	h2s := &http2.Server{
 		MaxReadFrameSize:             1 << 20, // Default value. 1MB
 		MaxUploadBufferPerConnection: 1 << 20, // Default value. 1MB

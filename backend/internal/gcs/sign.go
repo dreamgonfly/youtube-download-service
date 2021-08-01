@@ -10,8 +10,10 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+type SignFunc func(bucket, name string, opts *storage.SignedURLOptions) (string, error)
+
 // https://cloud.google.com/storage/docs/access-control/signing-urls-with-helpers#storage-signed-url-object-go
-func GenerateV4GetObjectSignedURL(key string) (string, error) {
+func GenerateV4GetObjectSignedURL(sign SignFunc, key string) (string, error) {
 	// bucket := "bucket-name"
 	// object := "object-name"
 	// serviceAccount := "service_account.json"
@@ -31,7 +33,7 @@ func GenerateV4GetObjectSignedURL(key string) (string, error) {
 		PrivateKey:     conf.PrivateKey,
 		Expires:        time.Now().Add(15 * time.Minute),
 	}
-	u, err := storage.SignedURL(config.Conf.Bucket, key, opts)
+	u, err := sign(config.Conf.Bucket, key, opts)
 	if err != nil {
 		return "", errors.Wrap(err, "storage.SignedURL")
 	}

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"mime"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -30,9 +28,10 @@ type Server struct {
 	youtubedl  youtubefile.YoutubeDl
 	gcsClient  gcs.Clienter
 	httpClient httpfile.Clienter
+	signFunc   gcs.SignFunc
 }
 
-func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h httpfile.Clienter) *Server {
+func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h httpfile.Clienter, sf gcs.SignFunc) *Server {
 	r := mux.NewRouter()
 	s := &Server{
 		router:     r,
@@ -40,6 +39,7 @@ func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h h
 		youtubedl:  youtubefile.YoutubeDl{ExecCommand: c},
 		gcsClient:  g,
 		httpClient: h,
+		signFunc:   sf,
 	}
 	s.routes()
 	return s
@@ -68,16 +68,6 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			err := errors.New("video id not provided")
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-		mediatype, _, err := mime.ParseMediaType(r.Header.Get("Accept"))
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusNotAcceptable)
-			return
-		}
-		if mediatype != "multipart/form-data" {
-			http.Error(w, "set Accept: multipart/form-data", http.StatusMultipleChoices)
 			return
 		}
 
@@ -124,7 +114,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		thumbnailPath := filepath.Join(tempDir, strings.Join([]string{youtubefile.Stem(filepath.Base(info)), filepath.Ext(u.Path)}, ""))
+		thumbnailPath := filepath.Join(tempDir, strings.Join([]string{youtubefile.Stem(filepath.Base(description)), filepath.Ext(u.Path)}, ""))
 		err = httpfile.DownloadFile(s.httpClient, last_thumbnail.URL, thumbnailPath)
 		if err != nil {
 			err = errors.Wrapf(err, "could not download thumbnail url (%s)", last_thumbnail.URL)
@@ -150,40 +140,6 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			estimatedFormats = append(estimatedFormats, format)
 		}
 
-		mw := multipart.NewWriter(w)
-		w.Header().Set("Content-Type", mw.FormDataContentType())
-		fw, err := mw.CreateFormField("formats")
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		err = json.NewEncoder(fw).Encode(estimatedFormats)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		bytes, err := ioutil.ReadFile(thumbnailPath)
-		fw, err = mw.CreateFormFile("thumbnail", filepath.Base(thumbnailPath))
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = fw.Write(bytes)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if err := mw.Close(); err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		key := filepath.Join("videos", id, filepath.Base(description))
 		err = gcs.UploadFile(s.context, s.gcsClient, description, key)
 		if err != nil {
@@ -202,8 +158,8 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key = filepath.Join("videos", id, filepath.Base(thumbnailPath))
-		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, key)
+		thumbnailKey := filepath.Join("videos", id, filepath.Base(thumbnailPath))
+		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, thumbnailKey)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload preview")
 			log.Println(err)
@@ -212,6 +168,26 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 
+		type Output struct {
+			Thumbnail string
+			Formats   []extract.Format
+		}
+
+		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		o := Output{Thumbnail: signedURL, Formats: estimatedFormats}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(o)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
