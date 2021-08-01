@@ -14,6 +14,7 @@ func (y *YoutubeDl) GetName(id string) (name string, err error) {
 		"youtube-dl",
 		"--output", "%(title)s.%(ext)s",
 		"--get-filename",
+		"--", // The '--' tells the shell that what follows after this is not an option to the command.
 		id,
 	).Output()
 	if err != nil {
@@ -30,6 +31,7 @@ func (y *YoutubeDl) GetNameWithFormat(id, format, dir string) (string, error) {
 		format,
 		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--get-filename",
+		"--",
 		id,
 	).Output()
 	if err != nil {
@@ -53,6 +55,7 @@ func (y *YoutubeDl) Preview(id, dir string) (description string, info string, er
 		"--write-info-json",
 		"--write-annotations",
 		"--write-sub",
+		"--",
 		id,
 	}
 	_, err = y.ExecCommand("youtube-dl", args...).Output()
@@ -73,6 +76,7 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 		"--format",
 		format,
 		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--",
 		id,
 	}
 	_, err = y.ExecCommand("youtube-dl", args...).Output()
