@@ -20,12 +20,31 @@ func (y *YoutubeDl) GetName(id string) (name string, err error) {
 		return "", errors.Wrap(err, "could not get filename")
 	}
 	filename := strings.TrimSpace(string(stdout))
-	ext := filepath.Ext(filename)
-	basename := filename[:len(filename)-len(ext)] // filename except extention
-	return basename, nil
+	return filename, nil
 }
 
-func (y *YoutubeDl) Preview(id, name, dir string) (description string, info string, err error) {
+func (y *YoutubeDl) GetNameWithFormat(id, format, dir string) (string, error) {
+	stdout, err := y.ExecCommand(
+		"youtube-dl",
+		"--format",
+		format,
+		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--get-filename",
+		id,
+	).Output()
+	if err != nil {
+		return "", errors.Wrap(err, "could not get filename")
+	}
+	filename := strings.TrimSpace(string(stdout))
+	return filename, nil
+}
+
+func (y *YoutubeDl) Preview(id, dir string) (description string, info string, err error) {
+	name, err := y.GetName(id)
+	if err != nil {
+		return "", "", err
+	}
+	stem := Stem(name)
 	args := []string{
 		"--skip-download",
 		// Output template: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#output-template
@@ -40,25 +59,16 @@ func (y *YoutubeDl) Preview(id, name, dir string) (description string, info stri
 	if err != nil {
 		return "", "", errors.Wrap(err, "could not download")
 	}
-	description = filepath.Join(dir, strings.Join([]string{name, ".description"}, ""))
-	info = filepath.Join(dir, strings.Join([]string{name, ".info.json"}, ""))
+	description = filepath.Join(dir, strings.Join([]string{stem, ".description"}, ""))
+	info = filepath.Join(dir, strings.Join([]string{stem, ".info.json"}, ""))
 	return description, info, nil
 }
 
 func (y *YoutubeDl) Download(id string, format string, dir string) (video string, err error) {
-	stdout, err := y.ExecCommand(
-		"youtube-dl",
-		"--format",
-		format,
-		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
-		"--get-filename",
-		id,
-	).Output()
+	filename, err := y.GetNameWithFormat(id, format, dir)
 	if err != nil {
-		return "", errors.Wrap(err, "could not get filename")
+		return "", err
 	}
-	filename := strings.TrimSpace(string(stdout))
-
 	args := []string{
 		"--format",
 		format,
@@ -71,4 +81,9 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 	}
 
 	return filename, nil
+}
+
+func Stem(filename string) string {
+	ext := filepath.Ext(filename)
+	return filename[:len(filename)-len(ext)] // filename except extention
 }
