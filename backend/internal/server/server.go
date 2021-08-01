@@ -50,6 +50,10 @@ func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h h
 
 // Make Server an http.Handle
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.enableCORS(&w)
+	if r.Method == "OPTIONS" { // Handling pre-flight OPTIONS requests
+		return
+	}
 	s.router.ServeHTTP(w, r)
 }
 
