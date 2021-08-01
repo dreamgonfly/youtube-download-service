@@ -9,5 +9,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.8.1
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
 	gopkg.in/yaml.v2 v2.2.2
 )
