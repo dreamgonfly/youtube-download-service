@@ -1,3 +1,7 @@
+const reconstructYoutubeURL = (id) => {
+    return `https://www.youtube.com/watch?v=${id}`
+}
+
 const isValidURL = (input) => {
     let isValid = true
     try {
@@ -13,4 +17,4 @@ const extractVideoIdFromURL = (url) => {
     return u.searchParams.get('v')
 }
 
-export default { extractVideoIdFromURL, isValidURL }
+export default { extractVideoIdFromURL, isValidURL, reconstructYoutubeURL }

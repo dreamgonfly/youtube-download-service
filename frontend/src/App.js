@@ -2,10 +2,25 @@ import React, { Fragment, useState } from 'react';
 import api from './api';
 import url from './url';
 
+let firstView = true
+
 function App() {
   const [enteredInput, setEnteredInput] = useState('');
   const [data, setData] = useState({ Thumbnail: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
+
+  if (firstView) {
+    const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
+    if (videoIdFromQuery !== null) {
+      console.log("videoIdFromQuery", videoIdFromQuery)
+      setEnteredInput(url.reconstructYoutubeURL(videoIdFromQuery))
+      api.preview(videoIdFromQuery).then((res) => {
+        console.log(res)
+        setData(res.data)
+      })
+      firstView = false
+    }
+  }
 
   const inputChangeHandler = (event) => {
     setEnteredInput(event.target.value);
@@ -50,7 +65,7 @@ function App() {
   return (
     <div>
       <h1>Youtube Download Service</h1>
-      <input type="text" onChange={inputChangeHandler} />
+      <input type="text" value={enteredInput} onChange={inputChangeHandler} />
       <button onClick={previewClickHandler}>Preview</button>
       <br />
       {data.Formats.map((item) => {
