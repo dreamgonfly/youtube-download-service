@@ -1,19 +1,26 @@
 import React, { Fragment, useState } from 'react';
 import api from './api';
+import url from './url';
 
 function App() {
-  const [enteredVideoId, setEnteredVideoId] = useState('');
+  const [enteredInput, setEnteredInput] = useState('');
   const [data, setData] = useState({ Thumbnail: "", Formats: [] })
+  const [videoId, setVideoId] = useState("")
 
-  const videoIdChangeHandler = (event) => {
-    setEnteredVideoId(event.target.value);
+  const inputChangeHandler = (event) => {
+    setEnteredInput(event.target.value);
   };
 
   const previewClickHandler = (event) => {
-    api.preview(enteredVideoId).then((res) => {
+    const isValidURL = url.isValidURL(enteredInput)
+    let videoId = enteredInput
+    if (isValidURL) {
+      videoId = url.extractVideoIdFromURL(enteredInput)
+    }
+    setVideoId(videoId)
+    api.preview(videoId).then((res) => {
       console.log(res)
       setData(res.data)
-
     })
   }
 
@@ -43,13 +50,13 @@ function App() {
   return (
     <div>
       <h1>Youtube Download Service</h1>
-      <input type="text" onChange={videoIdChangeHandler} />
+      <input type="text" onChange={inputChangeHandler} />
       <button onClick={previewClickHandler}>Preview</button>
       <br />
       {data.Formats.map((item) => {
         return <Fragment key={item.FormatId}>
           <br />
-          <a href={api.composeDownloadLink(enteredVideoId, item.FormatId)}><button>Download {item.FormatNote}</button></a>
+          <a href={api.composeDownloadLink(videoId, item.FormatId)}><button>Download {item.FormatNote}</button></a>
           <br />
         </Fragment>
       })}
