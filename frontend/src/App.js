@@ -47,7 +47,7 @@ function App() {
       <button onClick={previewClickHandler}>Preview</button>
       <br />
       {data.Formats.map((item) => {
-        return <Fragment>
+        return <Fragment key={item.FormatId}>
           <br />
           <a href={api.composeDownloadLink(enteredVideoId, item.FormatId)}><button>Download {item.FormatNote}</button></a>
           <br />
