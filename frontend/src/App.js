@@ -6,7 +6,7 @@ let firstView = true
 
 function App() {
   const [enteredInput, setEnteredInput] = useState('');
-  const [data, setData] = useState({ Thumbnail: "", Formats: [] })
+  const [data, setData] = useState({ Thumbnail: "", Name: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
 
   if (firstView) {
@@ -17,6 +17,9 @@ function App() {
       api.preview(videoIdFromQuery).then((res) => {
         console.log(res)
         setData(res.data)
+        api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
+          setData((prev) => { return { ...prev, Thumbnail: res.data.Thumbnail } })
+        })
       })
       firstView = false
     }
@@ -36,6 +39,9 @@ function App() {
     api.preview(videoId).then((res) => {
       console.log(res)
       setData(res.data)
+      api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
+        setData((prev) => { return { ...prev, Thumbnail: res.data.Thumbnail } })
+      })
     })
   }
 
