@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"youtube-download-backend/internal/extract"
 	"youtube-download-backend/internal/gcs"
@@ -106,24 +105,6 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			return
 		}
 		last_thumbnail := thumbnails[len(thumbnails)-1]
-		u, err := url.Parse(last_thumbnail.URL)
-		if err != nil {
-			err = errors.Wrapf(err, "could not parse thumbnail url (%s)", last_thumbnail.URL)
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		thumbnailPath := filepath.Join(tempDir, strings.Join([]string{youtubefile.Stem(filepath.Base(description)), filepath.Ext(u.Path)}, ""))
-		err = httpfile.DownloadFile(s.httpClient, last_thumbnail.URL, thumbnailPath)
-		if err != nil {
-			err = errors.Wrapf(err, "could not download thumbnail url (%s)", last_thumbnail.URL)
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		var filteredFormats []extract.Format
 		for _, format := range formats {
 			if format.FormatId == "18" || format.FormatId == "22" {
@@ -158,28 +139,13 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		thumbnailKey := filepath.Join("videos", id, filepath.Base(thumbnailPath))
-		err = gcs.UploadFile(s.context, s.gcsClient, thumbnailPath, thumbnailKey)
-		if err != nil {
-			err = errors.Wrap(err, "could not upload preview")
-			log.Println(err)
-			// TODO: logging
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 
 		type Output struct {
 			Thumbnail string
+			Name      string
 			Formats   []extract.Format
 		}
-
-		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		o := Output{Thumbnail: signedURL, Formats: estimatedFormats}
+		o := Output{Thumbnail: last_thumbnail.URL, Name: youtubefile.Stem(filepath.Base(description)), Formats: estimatedFormats}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(o)
