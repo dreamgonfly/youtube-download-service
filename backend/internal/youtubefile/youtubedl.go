@@ -59,9 +59,9 @@ func (y *YoutubeDl) Preview(id, dir string) (description string, info string, er
 	if err != nil {
 		return "", "", errors.Wrap(err, "could not download")
 	}
-	name, err := GetNameFromDir(dir)
+	name, err := GetNameFromDescription(dir)
 	if err != nil {
-		return "", "", errors.Wrap(err, "could not get name")
+		return "", "", errors.Wrap(err, "could not get name from description")
 	}
 	description = filepath.Join(dir, strings.Join([]string{name, ".description"}, ""))
 	info = filepath.Join(dir, strings.Join([]string{name, ".info.json"}, ""))
@@ -69,10 +69,6 @@ func (y *YoutubeDl) Preview(id, dir string) (description string, info string, er
 }
 
 func (y *YoutubeDl) Download(id string, format string, dir string) (video string, err error) {
-	filename, err := y.GetNameWithFormat(id, format, dir)
-	if err != nil {
-		return "", err
-	}
 	args := []string{
 		"--format",
 		format,
@@ -84,8 +80,12 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 	if err != nil {
 		return "", errors.Wrap(err, "could not download")
 	}
+	name, err := GetVideoPathFromDir(dir)
+	if err != nil {
+		return "", errors.Wrap(err, "could not get name from dir")
+	}
 
-	return filename, nil
+	return filepath.Join(dir, name), nil
 }
 
 func Stem(filename string) string {
@@ -93,10 +93,13 @@ func Stem(filename string) string {
 	return filename[:len(filename)-len(ext)] // filename except extention
 }
 
-// GetNameFromDir assumes there is only one description file in dir
-func GetNameFromDir(dir string) (name string, err error) {
+// GetNameFromDescription assumes there is only one description file in dir
+func GetNameFromDescription(dir string) (name string, err error) {
 	ext := ".description"
 	files, err := os.ReadDir(dir)
+	if err != nil {
+		return "", errors.Wrap(err, "could not read dir")
+	}
 	for _, f := range files {
 		n := f.Name()
 		if strings.HasSuffix(n, ext) {
@@ -105,4 +108,17 @@ func GetNameFromDir(dir string) (name string, err error) {
 		}
 	}
 	return "", errors.New(fmt.Sprintf("No file with %s extension", ext))
+}
+
+// GetVideoPathFromDir assumes there is only one file in dir
+func GetVideoPathFromDir(dir string) (name string, err error) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return "", errors.Wrap(err, "could not read dir")
+	}
+	if len(files) != 1 {
+		return "", errors.Wrap(err, fmt.Sprintf("expected 1 file. got %d files", len(files)))
+	}
+	f := files[0]
+	return f.Name(), nil
 }
