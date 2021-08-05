@@ -121,24 +121,26 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			estimatedFormats = append(estimatedFormats, format)
 		}
 
-		key := filepath.Join("videos", id, filepath.Base(description))
-		err = gcs.UploadFile(s.context, s.gcsClient, description, key)
-		if err != nil {
-			err = errors.Wrap(err, "could not upload preview")
-			log.Println(err)
-			// TODO: logging
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		key = filepath.Join("videos", id, filepath.Base(info))
-		err = gcs.UploadFile(s.context, s.gcsClient, info, key)
-		if err != nil {
-			err = errors.Wrap(err, "could not upload preview")
-			log.Println(err)
-			// TODO: logging
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		go func() {
+			key := filepath.Join("videos", id, filepath.Base(description))
+			err = gcs.UploadFile(s.context, s.gcsClient, description, key)
+			if err != nil {
+				err = errors.Wrap(err, "could not upload preview")
+				log.Println(err)
+				// TODO: logging
+				return
+			}
+		}()
+		go func() {
+			key := filepath.Join("videos", id, filepath.Base(info))
+			err = gcs.UploadFile(s.context, s.gcsClient, info, key)
+			if err != nil {
+				err = errors.Wrap(err, "could not upload preview")
+				log.Println(err)
+				// TODO: logging
+				return
+			}
+		}()
 
 		type Output struct {
 			Thumbnail string
@@ -245,6 +247,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 }
 
 func (s *Server) handleDownload() http.HandlerFunc {
+	// TODo: get name from file
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		id := params["id"]
