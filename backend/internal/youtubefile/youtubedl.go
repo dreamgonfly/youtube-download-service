@@ -1,6 +1,8 @@
 package youtubefile
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -42,11 +44,6 @@ func (y *YoutubeDl) GetNameWithFormat(id, format, dir string) (string, error) {
 }
 
 func (y *YoutubeDl) Preview(id, dir string) (description string, info string, err error) {
-	name, err := y.GetName(id)
-	if err != nil {
-		return "", "", err
-	}
-	stem := Stem(name)
 	args := []string{
 		"--skip-download",
 		// Output template: https://github.com/ytdl-org/youtube-dl/blob/master/README.md#output-template
@@ -62,8 +59,12 @@ func (y *YoutubeDl) Preview(id, dir string) (description string, info string, er
 	if err != nil {
 		return "", "", errors.Wrap(err, "could not download")
 	}
-	description = filepath.Join(dir, strings.Join([]string{stem, ".description"}, ""))
-	info = filepath.Join(dir, strings.Join([]string{stem, ".info.json"}, ""))
+	name, err := GetNameFromDir(dir)
+	if err != nil {
+		return "", "", errors.Wrap(err, "could not get name")
+	}
+	description = filepath.Join(dir, strings.Join([]string{name, ".description"}, ""))
+	info = filepath.Join(dir, strings.Join([]string{name, ".info.json"}, ""))
 	return description, info, nil
 }
 
@@ -90,4 +91,18 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 func Stem(filename string) string {
 	ext := filepath.Ext(filename)
 	return filename[:len(filename)-len(ext)] // filename except extention
+}
+
+// GetNameFromDir assumes there is only one description file in dir
+func GetNameFromDir(dir string) (name string, err error) {
+	ext := ".description"
+	files, err := os.ReadDir(dir)
+	for _, f := range files {
+		n := f.Name()
+		if strings.HasSuffix(n, ext) {
+			name = Stem(n)
+			return name, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("No file with %s extension", ext))
 }
