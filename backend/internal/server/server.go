@@ -78,7 +78,17 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer os.RemoveAll(tempDir)
+		uploadDescriptionDone := make(chan struct{})
+		uploadInfoDone := make(chan struct{})
+		go func() {
+			<-uploadDescriptionDone
+			<-uploadInfoDone
+			err := os.RemoveAll(tempDir)
+			if err != nil {
+				err = errors.Wrap(err, "could not remove tempDir")
+				log.Println(err)
+			}
+		}()
 
 		description, info, err := s.youtubedl.Preview(id, tempDir)
 		if err != nil {
@@ -125,21 +135,23 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			key := filepath.Join("videos", id, filepath.Base(description))
 			err = gcs.UploadFile(s.context, s.gcsClient, description, key)
 			if err != nil {
-				err = errors.Wrap(err, "could not upload preview")
+				err = errors.Wrap(err, "could not upload description")
 				log.Println(err)
 				// TODO: logging
 				return
 			}
+			close(uploadDescriptionDone)
 		}()
 		go func() {
 			key := filepath.Join("videos", id, filepath.Base(info))
 			err = gcs.UploadFile(s.context, s.gcsClient, info, key)
 			if err != nil {
-				err = errors.Wrap(err, "could not upload preview")
+				err = errors.Wrap(err, "could not upload info")
 				log.Println(err)
 				// TODO: logging
 				return
 			}
+			close(uploadInfoDone)
 		}()
 
 		type Output struct {
@@ -273,7 +285,15 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer os.RemoveAll(tempDir)
+		uploadDone := make(chan struct{})
+		go func() {
+			<-uploadDone
+			err := os.RemoveAll(tempDir)
+			if err != nil {
+				err = errors.Wrap(err, "could not remove tempDir")
+				log.Println(err)
+			}
+		}()
 
 		video, err := s.youtubedl.Download(id, formatCode, tempDir)
 		if err != nil {
@@ -283,15 +303,16 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		key := filepath.Join("videos", id, filepath.Base(video))
-		err = gcs.UploadFile(s.context, s.gcsClient, video, key)
-		if err != nil {
-			err = errors.Wrap(err, "could not upload video")
-			log.Println(err)
-			// TODO: logging
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		go func() {
+			key := filepath.Join("videos", id, filepath.Base(video))
+			err = gcs.UploadFile(s.context, s.gcsClient, video, key)
+			if err != nil {
+				err = errors.Wrap(err, "could not upload video")
+				log.Println(err)
+				// TODO: logging
+			}
+			close(uploadDone)
+		}()
 
 		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(filepath.Base(video)))
 		w.Header().Set("Content-Type", "application/octet-stream")
