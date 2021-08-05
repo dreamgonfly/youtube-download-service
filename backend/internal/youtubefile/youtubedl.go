@@ -55,9 +55,9 @@ func (y *YoutubeDl) Preview(id, dir string) (description string, info string, er
 		"--",
 		id,
 	}
-	_, err = y.ExecCommand("youtube-dl", args...).Output()
+	out, err := y.ExecCommand("youtube-dl", args...).CombinedOutput()
 	if err != nil {
-		return "", "", errors.Wrap(err, "could not download")
+		return "", "", errors.Wrap(err, fmt.Sprintf("error excuting (youtube-dl %s) outputing (%s)", strings.Join(args, " "), string(out)))
 	}
 	name, err := GetNameFromDescription(dir)
 	if err != nil {
@@ -76,9 +76,9 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 		"--",
 		id,
 	}
-	_, err = y.ExecCommand("youtube-dl", args...).Output()
+	out, err := y.ExecCommand("youtube-dl", args...).CombinedOutput()
 	if err != nil {
-		return "", errors.Wrap(err, "could not download")
+		return "", errors.Wrap(err, fmt.Sprintf("error excuting (youtube-dl %s) outputing (%s)", strings.Join(args, " "), string(out)))
 	}
 	name, err := GetVideoPathFromDir(dir)
 	if err != nil {

@@ -94,7 +94,8 @@ func Command(name string, arg ...string) youtubefile.Outputer {
 
 type Cmd struct{ Content []byte }
 
-func (c *Cmd) Output() ([]byte, error) { return c.Content, nil }
+func (c *Cmd) Output() ([]byte, error)         { return c.Content, nil }
+func (c *Cmd) CombinedOutput() ([]byte, error) { return c.Content, nil }
 
 // https://stackoverflow.com/a/21067803/7866795
 func copyFileContents(src, dst string) (err error) {

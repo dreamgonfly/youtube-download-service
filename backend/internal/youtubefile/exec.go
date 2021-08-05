@@ -11,3 +11,6 @@ type Cmd struct{ Cmd *exec.Cmd }
 func (c *Cmd) Output() ([]byte, error) {
 	return c.Cmd.Output()
 }
+func (c *Cmd) CombinedOutput() ([]byte, error) {
+	return c.Cmd.CombinedOutput()
+}
