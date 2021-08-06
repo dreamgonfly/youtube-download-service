@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"youtube-download-backend/internal/extract"
 	"youtube-download-backend/internal/gcs"
@@ -295,27 +294,27 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			}
 		}()
 
-		video, err := s.youtubedl.Download(id, formatCode, tempDir)
+		err = s.youtubedl.DownloadStream(id, formatCode, w)
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
 			log.Println(err)
 			// TODO: logging
+			w.Header().Del("Content-Disposition")
+			w.Header().Del("Content-Type")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		go func() {
-			key := filepath.Join("videos", id, filepath.Base(video))
-			err = gcs.UploadFile(s.context, s.gcsClient, video, key)
-			if err != nil {
-				err = errors.Wrap(err, "could not upload video")
-				log.Println(err)
-				// TODO: logging
-			}
-			close(uploadDone)
-		}()
 
-		w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(filepath.Base(video)))
-		w.Header().Set("Content-Type", "application/octet-stream")
-		http.ServeFile(w, r, video)
+		// TODO: streaming to GCS
+		// go func() {
+		// 	key := filepath.Join("videos", id, filepath.Base(video))
+		// 	err = gcs.UploadFile(s.context, s.gcsClient, video, key)
+		// 	if err != nil {
+		// 		err = errors.Wrap(err, "could not upload video")
+		// 		log.Println(err)
+		// 		// TODO: logging
+		// 	}
+		// 	close(uploadDone)
+		// }()
 	}
 }

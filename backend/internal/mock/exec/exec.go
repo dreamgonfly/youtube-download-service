@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"os"
@@ -96,6 +97,14 @@ type Cmd struct{ Content []byte }
 
 func (c *Cmd) Output() ([]byte, error)         { return c.Content, nil }
 func (c *Cmd) CombinedOutput() ([]byte, error) { return c.Content, nil }
+func (c *Cmd) StdoutPipe() (io.ReadCloser, error) {
+	return io.NopCloser(bytes.NewReader(c.Content)), nil
+}
+func (c *Cmd) StderrPipe() (io.ReadCloser, error) {
+	return io.NopCloser(bytes.NewReader([]byte{})), nil
+}
+func (c *Cmd) Start() error {return nil}
+func (c *Cmd) Wait() error {return nil}
 
 // https://stackoverflow.com/a/21067803/7866795
 func copyFileContents(src, dst string) (err error) {

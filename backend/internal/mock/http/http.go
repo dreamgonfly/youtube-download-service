@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,7 +22,6 @@ func (c *Client) Get(url string) (resp *http.Response, err error) {
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
-	log.Println("URL", req.URL.Path)
 	if req.URL.Path == "/vi/GSVsfCCtRr0/hqdefault.jpg" {
 		f, err := os.Open(filepath.Join(config.RootDir, "testdata", "[기생충] 30초 예고.jpg"))
 		if err != nil {
