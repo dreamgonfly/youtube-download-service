@@ -77,7 +77,7 @@ function App() {
       {data.Formats.map((item) => {
         return <Fragment key={item.FormatId}>
           <br />
-          <a href={api.composeDownloadLink(videoId, item.FormatId)}><button>Download {item.FormatNote}</button></a>
+          <a href={api.composeDownloadLink(videoId, item.FormatId, data.Name + "." + item.Ext)}><button>Download {item.FormatNote}</button></a>
           <br />
         </Fragment>
       })}

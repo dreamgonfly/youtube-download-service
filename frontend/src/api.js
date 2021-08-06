@@ -23,8 +23,11 @@ const updateThumbnail = (id, url, name) => {
     })
 }
 
-const composeDownloadLink = (id, format) => {
-    return `${BASE_URL}/download/${id}?format=${format}`
+const composeDownloadLink = (id, format, filename) => {
+    const url = new URL(`${BASE_URL}/download/${id}`)
+    url.searchParams.append("format", format)
+    url.searchParams.append("filename", filename)
+    return url.href
 }
 
 export default { preview, hello, composeDownloadLink, updateThumbnail }
