@@ -17,4 +17,6 @@ const extractVideoIdFromURL = (url) => {
     return u.searchParams.get('v')
 }
 
-export default { extractVideoIdFromURL, isValidURL, reconstructYoutubeURL }
+const url = { extractVideoIdFromURL, isValidURL, reconstructYoutubeURL }
+
+export default url

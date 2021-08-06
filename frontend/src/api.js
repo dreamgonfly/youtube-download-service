@@ -30,4 +30,6 @@ const composeDownloadLink = (id, format, filename) => {
     return url.href
 }
 
-export default { preview, hello, composeDownloadLink, updateThumbnail }
+const api = { preview, hello, composeDownloadLink, updateThumbnail }
+
+export default api
