@@ -33,6 +33,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		}
 		var t ThumbnailRequest
 		err := json.NewDecoder(r.Body).Decode(&t)
+		defer r.Body.Close()
 		if err != nil {
 			err := errors.Wrap(err, "could not parse request body")
 			http.Error(w, err.Error(), http.StatusBadRequest)
