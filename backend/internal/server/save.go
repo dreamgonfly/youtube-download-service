@@ -1,21 +1,24 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"strconv"
+	"path/filepath"
 	"strings"
+	"time"
+	"youtube-download-backend/internal/config"
+	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
-const BUFFER_SIZE = 1024
-
-func (s *Server) handleDownload() http.HandlerFunc {
+func (s *Server) handleSave() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		id := params["id"]
@@ -49,22 +52,43 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		}
 
 		cmd := s.youtubedl.StreamDownloadCommand(id, format, w)
-		err := s.StreamDownload(cmd, filename, w)
+
+		key := filepath.Join("videos", id, filename)
+		err := s.StreamSave(cmd, key)
 		if err != nil {
-			err = errors.Wrap(err, "could not download video")
+			err = errors.Wrap(err, "could not save video")
 			log.Println(err)
 			// TODO: logging
-			w.Header().Del("Content-Disposition")
-			w.Header().Del("Content-Type")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, key)
+
+		output := struct {
+			Filename string
+			URL      string
+		}{
+			Filename: filename,
+			URL:      signedURL,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(output)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 	}
 }
 
-func (s *Server) StreamDownload(cmd youtubefile.Outputer, filename string, w http.ResponseWriter) error {
-	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(filename))
-	w.Header().Set("Content-Type", "application/octet-stream")
+func (s *Server) StreamSave(cmd youtubefile.Outputer, key string) error {
+	ctx, cancel := context.WithTimeout(s.context, 1*time.Hour)
+	defer cancel()
+
+	wc := s.gcsClient.Bucket(config.Conf.Bucket).Object(key).NewWriter(ctx)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -88,12 +112,8 @@ func (s *Server) StreamDownload(cmd youtubefile.Outputer, filename string, w htt
 			break
 		}
 		data := buffer[0:n]
-		w.Write(data)
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
-		} else {
-			return errors.New("could not flush http")
-		}
+		wc.Write(data)
+
 		// reset buffer
 		for i := 0; i < n; i++ {
 			buffer[i] = 0
@@ -107,6 +127,11 @@ func (s *Server) StreamDownload(cmd youtubefile.Outputer, filename string, w htt
 	if err != nil {
 		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
 		return errors.Wrap(err, fmt.Sprintf("error waiting command (%s)", cmd.String()))
+	}
+
+	err = wc.Close()
+	if err != nil {
+		return errors.Wrap(err, "Writer.Close")
 	}
 	return nil
 }
