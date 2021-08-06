@@ -173,3 +173,38 @@ func TestHandleDownload(t *testing.T) {
 	}
 	assert.Equal(t, expected, actual)
 }
+
+func TestHandleDownloadWithFilename(t *testing.T) {
+	ctx := context.Background()
+	c := execmock.Command
+	g := &gcsmock.Client{}
+	h := &httpmock.Client{}
+	sf := gcsmock.SignedURL
+	srv := httptest.NewServer(server.NewServer(ctx, c, g, h, sf))
+	url := fmt.Sprintf("%s/download/GSVsfCCtRr0?format=18&filename=test.mp4", srv.URL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		t.Fatalf("could not create GET request: %v", err)
+	}
+	req.Header.Set("Accept", "multipart/form-data; charset=utf-8")
+
+	res, err := srv.Client().Do(req)
+	if err != nil {
+		t.Fatalf("could not process request: %v", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("expected status OK; got %v", res.Status)
+	}
+
+	actual, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("could not read response: %v", err)
+	}
+	expected, err := os.ReadFile("../../testdata/[기생충] 30초 예고_360p.mp4")
+	if err != nil {
+		t.Fatalf("could not read file: %v", err)
+	}
+	assert.Equal(t, expected, actual)
+}

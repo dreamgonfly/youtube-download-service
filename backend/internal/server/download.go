@@ -26,22 +26,30 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			return
 		}
 		formats, ok := r.URL.Query()["format"]
-		if !ok || len(formats[0]) < 1 {
+		if !ok || len(formats) != 1 {
 			log.Println("format is missing")
 			http.Error(w, "format is missing", http.StatusBadRequest)
 			return
 		}
 		format := formats[0]
 
-		name, err := s.youtubedl.GetNameWithFormat(id, format)
-		if err != nil {
-			err = errors.Wrap(err, "could not get name")
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		var filename string
+		filenames, ok := r.URL.Query()["filename"]
+		if ok && len(filenames) == 1 {
+			filename = filenames[0]
+		} else {
+			name, err := s.youtubedl.GetFilenameWithFormat(id, format)
+			if err != nil {
+				err = errors.Wrap(err, "could not get name")
+				log.Println(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			filename = name
 		}
+
 		cmd := s.youtubedl.StreamDownloadCommand(id, format, w)
-		err = s.StreamDownload(cmd, name, w)
+		err := s.StreamDownload(cmd, filename, w)
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
 			log.Println(err)

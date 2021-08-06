@@ -28,7 +28,7 @@ func (y *YoutubeDl) GetName(id string) (name string, err error) {
 	return filename, nil
 }
 
-func (y *YoutubeDl) GetNameWithFormat(id, format string) (string, error) {
+func (y *YoutubeDl) GetFilenameWithFormat(id, format string) (string, error) {
 	cmd := y.ExecCommand(
 		"youtube-dl",
 		"--format",
