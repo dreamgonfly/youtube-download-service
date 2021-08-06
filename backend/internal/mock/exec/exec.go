@@ -67,12 +67,29 @@ func Command(name string, arg ...string) youtubefile.Outputer {
 		arg[0] == "--format" &&
 		arg[1] == "18" &&
 		arg[2] == "--output" &&
-		arg[3][:4] == "/var" && // /var/folders/53/tpn8zp511y1gdz9k_srhvbh80000gn/T/407901467/%(title)s_%(format_note)s.%(ext)s
+		arg[3] == "%(title)s_%(format_note)s.%(ext)s" &&
 		arg[4] == "--get-filename" &&
 		arg[5] == "--" &&
 		arg[6] == "GSVsfCCtRr0" {
-		dir := filepath.Dir(arg[3])
-		return &Cmd{Content: []byte(filepath.Join(dir, "[기생충] 30초 예고_360p.mp4"))}
+		return &Cmd{Content: []byte("[기생충] 30초 예고_360p.mp4")}
+	} else if name == "youtube-dl" &&
+		arg[0] == "--format" &&
+		arg[1] == "18" &&
+		arg[2] == "--output" &&
+		arg[3] == "-" &&
+		arg[4] == "--" &&
+		arg[5] == "GSVsfCCtRr0" {
+		videoname := "[기생충] 30초 예고_360p.mp4"
+		videopath := filepath.Join(config.RootDir, "testdata", videoname)
+		in, err := os.Open(videopath)
+		if err != nil {
+			log.Fatalf("could not open video: %s", err)
+		}
+		content, err := io.ReadAll(in)
+		if err != nil {
+			log.Fatalf("could not read video: %s", err)
+		}
+		return &Cmd{Content: content}
 	} else if name == "youtube-dl" &&
 		arg[0] == "--format" &&
 		arg[1] == "18" &&
