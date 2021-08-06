@@ -11,4 +11,5 @@ type Outputer interface {
 	StderrPipe() (io.ReadCloser, error)
 	Start() error
 	Wait() error
+	String() string
 }

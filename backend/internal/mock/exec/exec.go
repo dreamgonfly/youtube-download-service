@@ -103,8 +103,9 @@ func (c *Cmd) StdoutPipe() (io.ReadCloser, error) {
 func (c *Cmd) StderrPipe() (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader([]byte{})), nil
 }
-func (c *Cmd) Start() error {return nil}
-func (c *Cmd) Wait() error {return nil}
+func (c *Cmd) Start() error   { return nil }
+func (c *Cmd) Wait() error    { return nil }
+func (c *Cmd) String() string { return "" }
 
 // https://stackoverflow.com/a/21067803/7866795
 func copyFileContents(src, dst string) (err error) {

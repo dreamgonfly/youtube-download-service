@@ -1,17 +1,21 @@
 package server
 
 import (
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"os"
+	"strconv"
+	"strings"
+	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
+const BUFFER_SIZE = 1024
+
 func (s *Server) handleDownload() http.HandlerFunc {
-	// TODo: get name from file
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		id := params["id"]
@@ -21,33 +25,23 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		formatCodes, ok := r.URL.Query()["format"]
-		if !ok || len(formatCodes[0]) < 1 {
+		formats, ok := r.URL.Query()["format"]
+		if !ok || len(formats[0]) < 1 {
 			log.Println("format is missing")
 			http.Error(w, "format is missing", http.StatusBadRequest)
 			return
 		}
-		formatCode := formatCodes[0]
+		format := formats[0]
 
-		tempDir, err := ioutil.TempDir("", "")
+		name, err := s.youtubedl.GetNameWithFormat(id, format)
 		if err != nil {
-			err = errors.Wrap(err, "could not create temp dir")
+			err = errors.Wrap(err, "could not get name")
 			log.Println(err)
-			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		uploadDone := make(chan struct{})
-		go func() {
-			<-uploadDone
-			err := os.RemoveAll(tempDir)
-			if err != nil {
-				err = errors.Wrap(err, "could not remove tempDir")
-				log.Println(err)
-			}
-		}()
-
-		err = s.youtubedl.DownloadStream(id, formatCode, w)
+		cmd := s.youtubedl.StreamDownloadCommand(id, format, w)
+		err = s.StreamDownload(cmd, name, w)
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
 			log.Println(err)
@@ -57,17 +51,54 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		// TODO: streaming to GCS
-		// go func() {
-		// 	key := filepath.Join("videos", id, filepath.Base(video))
-		// 	err = gcs.UploadFile(s.context, s.gcsClient, video, key)
-		// 	if err != nil {
-		// 		err = errors.Wrap(err, "could not upload video")
-		// 		log.Println(err)
-		// 		// TODO: logging
-		// 	}
-		// 	close(uploadDone)
-		// }()
 	}
+}
+
+func (s *Server) StreamDownload(cmd youtubefile.Outputer, name string, w http.ResponseWriter) error {
+	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(name))
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("stdout error command (%s)", cmd.String()))
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("stderr error command (%s)", cmd.String()))
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		err = errors.Wrap(err, fmt.Sprintf("error starting (%s)", cmd.String()))
+		return err
+	}
+	buffer := make([]byte, BUFFER_SIZE)
+	for {
+		n, err := stdout.Read(buffer)
+		if err != nil {
+			stdout.Close()
+			break
+		}
+		data := buffer[0:n]
+		w.Write(data)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		} else {
+			return errors.New("could not flush http")
+		}
+		// reset buffer
+		for i := 0; i < n; i++ {
+			buffer[i] = 0
+		}
+	}
+	errout, err := io.ReadAll(stderr)
+	if err != nil {
+		err = errors.Wrap(err, "could not read stderr")
+	}
+	err = cmd.Wait()
+	if err != nil {
+		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
+		return errors.Wrap(err, fmt.Sprintf("error waiting command (%s)", cmd.String()))
+	}
+	return nil
 }

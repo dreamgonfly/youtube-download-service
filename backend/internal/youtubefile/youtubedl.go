@@ -6,15 +6,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
 type YoutubeDl struct{ ExecCommand Commander }
-
-const BUFFER_SIZE = 1024
 
 func (y *YoutubeDl) GetName(id string) (name string, err error) {
 	stdout, err := y.ExecCommand(
@@ -31,20 +28,45 @@ func (y *YoutubeDl) GetName(id string) (name string, err error) {
 	return filename, nil
 }
 
-func (y *YoutubeDl) GetNameWithFormat(id, format, dir string) (string, error) {
-	stdout, err := y.ExecCommand(
+func (y *YoutubeDl) GetNameWithFormat(id, format string) (string, error) {
+	cmd := y.ExecCommand(
 		"youtube-dl",
 		"--format",
 		format,
-		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
+		"--output", "%(title)s_%(format_note)s.%(ext)s",
 		"--get-filename",
 		"--",
 		id,
-	).Output()
+	)
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", errors.Wrap(err, "could not get filename")
+		return "", errors.Wrap(err, fmt.Sprintf("stdout error command (%s)", cmd.String()))
 	}
-	filename := strings.TrimSpace(string(stdout))
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("stderr error command (%s)", cmd.String()))
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		err = errors.Wrap(err, fmt.Sprintf("error starting (%s)", cmd.String()))
+		return "", err
+	}
+	out, err := io.ReadAll(stdout)
+	if err != nil {
+		return "", errors.Wrap(err, "could not read stdout")
+	}
+	errout, err := io.ReadAll(stderr)
+	if err != nil {
+		err = errors.Wrap(err, "could not read stderr")
+	}
+	err = cmd.Wait()
+	if err != nil {
+		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
+		return "", errors.Wrap(err, fmt.Sprintf("error waiting command (%s)", cmd.String()))
+	}
+
+	filename := strings.TrimSpace(string(out))
 	return filename, nil
 }
 
@@ -93,9 +115,7 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 	return filepath.Join(dir, name), nil
 }
 
-func (y *YoutubeDl) DownloadStream(id string, format string, w http.ResponseWriter) (err error) {
-	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote("video.mp4"))
-	w.Header().Set("Content-Type", "application/octet-stream")
+func (y *YoutubeDl) StreamDownloadCommand(id string, format string, w http.ResponseWriter) (cmd Outputer) {
 
 	args := []string{
 		"--format",
@@ -104,51 +124,8 @@ func (y *YoutubeDl) DownloadStream(id string, format string, w http.ResponseWrit
 		"--",
 		id,
 	}
-	cmd := y.ExecCommand("youtube-dl", args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("stdout error command (youtube-dl %s)", strings.Join(args, " ")))
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("stderr error command (youtube-dl %s)", strings.Join(args, " ")))
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		err = errors.Wrap(err, fmt.Sprintf("error starting (youtube-dl %s)", strings.Join(args, " ")))
-		return err
-	}
-	buffer := make([]byte, BUFFER_SIZE)
-	for {
-		n, err := stdout.Read(buffer)
-		if err != nil {
-			stdout.Close()
-			break
-		}
-		data := buffer[0:n]
-		w.Write(data)
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
-		} else {
-			return errors.New("could not flush http")
-		}
-		// reset buffer
-		for i := 0; i < n; i++ {
-			buffer[i] = 0
-		}
-	}
-	errout, err := io.ReadAll(stderr)
-	if err != nil {
-		err = errors.Wrap(err, "could not read stderr")
-	}
-	err = cmd.Wait()
-	if err != nil {
-		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
-		return errors.Wrap(err, fmt.Sprintf("error waiting command (youtube-dl %s)", strings.Join(args, " ")))
-	}
-
-	return nil
+	cmd = y.ExecCommand("youtube-dl", args...)
+	return cmd
 }
 
 func Stem(filename string) string {

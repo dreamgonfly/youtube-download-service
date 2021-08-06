@@ -34,3 +34,7 @@ func (c *Cmd) Start() error {
 func (c *Cmd) Wait() error {
 	return c.Cmd.Wait()
 }
+
+func (c *Cmd) String() string {
+	return c.Cmd.String()
+}
