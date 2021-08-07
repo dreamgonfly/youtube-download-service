@@ -2,10 +2,13 @@ install:
 	npm install
 
 start:
-	npm start
+	REACT_APP_ENV=local npm start
 
-build:
-	npm run build
+build-beta:
+	REACT_APP_ENV=beta npm run build
+
+build-live:
+	REACT_APP_ENV=live npm run build
 
 deploy-beta:
 	gsutil rsync -R build/ gs://youtube-download-frontend-beta

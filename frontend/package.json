@@ -13,9 +13,9 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "sh -ac '. env/.env.${REACT_APP_ENV}; react-scripts start'",
+    "build": "sh -ac '. env/.env.${REACT_APP_ENV}; react-scripts build'",
+    "test": "sh -ac '. env/.env.${REACT_APP_ENV}; react-scripts test'",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

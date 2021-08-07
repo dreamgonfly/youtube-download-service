@@ -1,11 +1,10 @@
 import Axios from 'axios';
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 const axios = Axios.create({
     baseURL: BASE_URL,
 });
-
 
 const hello = () => {
     return axios.get(`/hello`)
