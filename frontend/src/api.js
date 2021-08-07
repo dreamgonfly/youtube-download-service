@@ -22,6 +22,13 @@ const updateThumbnail = (id, url, name) => {
     })
 }
 
+const save = (id, format, filename) => {
+    const url = new URL(`${BASE_URL}/save/${id}`)
+    url.searchParams.append("format", format)
+    url.searchParams.append("filename", filename)
+    return axios.get(url.href)
+}
+
 const composeDownloadLink = (id, format, filename) => {
     const url = new URL(`${BASE_URL}/download/${id}`)
     url.searchParams.append("format", format)
@@ -29,6 +36,6 @@ const composeDownloadLink = (id, format, filename) => {
     return url.href
 }
 
-const api = { preview, hello, composeDownloadLink, updateThumbnail }
+const api = { preview, hello, composeDownloadLink, updateThumbnail, save }
 
 export default api
