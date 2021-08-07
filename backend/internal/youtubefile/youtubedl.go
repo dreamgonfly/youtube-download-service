@@ -38,36 +38,28 @@ func (y *YoutubeDl) GetFilenameWithFormat(id, format string) (string, error) {
 		"--",
 		id,
 	)
-	stdout, err := cmd.StdoutPipe()
+	filename, err := GetStdout(cmd)
 	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("stdout error command (%s)", cmd.String()))
+		return "", errors.Wrap(err, "could not get stdout")
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("stderr error command (%s)", cmd.String()))
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		err = errors.Wrap(err, fmt.Sprintf("error starting (%s)", cmd.String()))
-		return "", err
-	}
-	out, err := io.ReadAll(stdout)
-	if err != nil {
-		return "", errors.Wrap(err, "could not read stdout")
-	}
-	errout, err := io.ReadAll(stderr)
-	if err != nil {
-		err = errors.Wrap(err, "could not read stderr")
-	}
-	err = cmd.Wait()
-	if err != nil {
-		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
-		return "", errors.Wrap(err, fmt.Sprintf("error waiting command (%s)", cmd.String()))
-	}
-
-	filename := strings.TrimSpace(string(out))
 	return filename, nil
+}
+
+func (y *YoutubeDl) GetURL(id string, format string) (video string, err error) {
+	cmd := y.ExecCommand(
+		"youtube-dl",
+		"--format",
+		format,
+		"--get-url",
+		"--",
+		id,
+	)
+	url, err := GetStdout(cmd)
+	if err != nil {
+		return "", errors.Wrap(err, "could not get stdout")
+	}
+
+	return url, nil
 }
 
 func (y *YoutubeDl) Preview(id, dir string) (description string, info string, err error) {
@@ -99,6 +91,9 @@ func (y *YoutubeDl) Download(id string, format string, dir string) (video string
 	args := []string{
 		"--format",
 		format,
+		"--external-downloader", "aria2c",
+		"--external-downloader-args", "-j 5 -x 5 -k 10M",
+		"--force-ipv4", // Youtube ban entire IPv6 blocks. https://github.com/ytdl-org/youtube-dl/issues/21729
 		"--output", filepath.Join(dir, "%(title)s_%(format_note)s.%(ext)s"),
 		"--",
 		id,
@@ -127,6 +122,38 @@ func (y *YoutubeDl) StreamDownloadCommand(id string, format string, w http.Respo
 	}
 	cmd = y.ExecCommand("youtube-dl", args...)
 	return cmd
+}
+
+func GetStdout(cmd Outputer) (string, error) {
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("stdout error command (%s)", cmd.String()))
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		return "", errors.Wrap(err, fmt.Sprintf("stderr error command (%s)", cmd.String()))
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		err = errors.Wrap(err, fmt.Sprintf("error starting (%s)", cmd.String()))
+		return "", err
+	}
+	out, err := io.ReadAll(stdout)
+	if err != nil {
+		return "", errors.Wrap(err, "could not read stdout")
+	}
+	errout, err := io.ReadAll(stderr)
+	if err != nil {
+		err = errors.Wrap(err, "could not read stderr")
+	}
+	err = cmd.Wait()
+	if err != nil {
+		err = errors.Wrap(err, strings.TrimSpace(string(errout)))
+		return "", errors.Wrap(err, fmt.Sprintf("error waiting command (%s)", cmd.String()))
+	}
+
+	return strings.TrimSpace(string(out)), nil
 }
 
 func Stem(filename string) string {

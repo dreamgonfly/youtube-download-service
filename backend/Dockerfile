@@ -34,6 +34,7 @@ WORKDIR /app
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl \
     python3 \
+    aria2 \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 RUN ln -s /usr/bin/python3 /usr/bin/python
