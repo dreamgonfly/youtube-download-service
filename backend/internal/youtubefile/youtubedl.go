@@ -120,6 +120,7 @@ func (y *YoutubeDl) StreamDownloadCommand(id string, format string, w http.Respo
 	args := []string{
 		"--format",
 		format,
+		"--force-ipv4", // Youtube ban entire IPv6 blocks. https://github.com/ytdl-org/youtube-dl/issues/21729
 		"--output", "-",
 		"--",
 		id,
