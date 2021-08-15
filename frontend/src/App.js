@@ -100,13 +100,16 @@ function App() {
 
   let outputBlock = <div></div>
   if (data.Formats.length > 0 && selectedIndex) {
+    const minutes = Math.floor(data.DurationSecond / 60)
+    const seconds = data.DurationSecond - minutes * 60;
+
     outputBlock = <div className={styles["output-card"]}>
       <div className={styles["output-content"]}>
         <div className={styles["output-thumbnail"]}>
           <img className={styles["img"]} src={data.Thumbnail} alt="thumbnail" />
         </div>
-        <div className={styles["output-title"]}>This is the title long long long long long long long</div>
-        <div className={styles["output-length"]}>31:46</div>
+        <div className={styles["output-title"]}>{data.Title}</div>
+        <div className={styles["output-length"]}>{minutes}:{seconds}</div>
       </div>
       <div className={styles["output-download"]}>
         <div className={styles["output-format-choice"]}>
