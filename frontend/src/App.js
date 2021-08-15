@@ -1,6 +1,7 @@
 import React, { Fragment, useState } from 'react';
 import api from './api';
 import url from './url';
+import styles from './index.module.css';
 
 let firstView = true
 
@@ -8,6 +9,7 @@ function App() {
   const [enteredInput, setEnteredInput] = useState('');
   const [data, setData] = useState({ Thumbnail: "", Name: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   if (firstView) {
     const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
@@ -74,14 +76,40 @@ function App() {
   //   ]
   // }
 
-  let thumbnailElement = <div></div>
-  if (data['Thumbnail'] !== "") {
-    thumbnailElement = <Fragment><h3>Thumbnail</h3><img src={data.Thumbnail} alt="thumbnail" /></Fragment>
+  let outputBlock = <div></div>
+  if (data.Formats.length > 0) {
+    outputBlock = <div className={styles["output-card"]}>
+      <div className={styles["output-content"]}>
+        <div className={styles["output-thumbnail"]}>
+          <img className={styles["img"]} src={data.Thumbnail} alt="thumbnail" />
+        </div>
+        <div className={styles["output-title"]}>This is the title long long long long long long long</div>
+        <div className={styles["output-length"]}>31:46</div>
+      </div>
+      <div className={styles["output-download"]}>
+        <div className={styles["output-format-choice"]}>
+          <div className={styles["format-desc"]}>MP4 360p 148MB</div>
+          <div className={styles["format-choice-arrow"]}><i className={`fas fa-caret-down ${styles["arrow-down"]}`}></i></div>
+        </div>
+        <div className={styles["output-format-options"]}>
+          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
+          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
+          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
+          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
+        </div>
+        <div className={styles["output-action"]}>
+          <a href={api.composeDownloadLink(videoId, data.Formats[selectedIndex].FormatId, data.Name + "." + data.Formats[selectedIndex].Ext)}><button className={styles["output-download-button"]}>Download</button></a>
+          <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats[selectedIndex].FormatId, data.Name + "." + data.Formats[selectedIndex].Ext)}>
+            <i className={`fas fa-external-link-alt ${styles["external"]}`}></i>
+          </button>
+        </div>
+      </div>
+    </div>
   }
 
   return (
-    <div>
-      <h1>Youtube Download Service</h1>
+    <Fragment>
+      {/* <h1>Youtube Download Service</h1>
       <input type="text" value={enteredInput} onChange={inputChangeHandler} />
       <button onClick={previewClickHandler}>Preview</button>
       <br />
@@ -93,8 +121,40 @@ function App() {
           <br />
         </Fragment>
       })}
-      {thumbnailElement}
-    </div>
+      {thumbnailElement} */}
+      <header>
+        <div className={styles.inner}>
+          <div className={styles.headerContainer}>
+            <div className={styles["header-icon"]}></div>
+          </div>
+        </div>
+      </header>
+      <section className={styles["input"]}>
+        <div className={styles.inner}>
+          <div className={styles["title-container"]}>
+            <div className={styles['title-logo']}>Dryoutube.com</div>
+            <div className={styles["title-desc"]}>Online Youtube Downloader</div>
+          </div>
+          <div className={styles["input-container"]}>
+            <div className={styles["input-logo"]}><img className={styles["logo-img"]} src="logo.png" alt="" /></div>
+            <input className={styles["input-bar"]} type="text" placeholder="Put your video link here" value={enteredInput} onChange={inputChangeHandler}></input>
+            <button className={styles["input-button"]} onClick={previewClickHandler}><i className="fas fa-play"></i></button>
+          </div>
+        </div>
+      </section>
+      <section className={styles["output"]}>
+        <div className={styles.inner}>
+          {outputBlock}
+        </div>
+      </section>
+      <footer>
+        <div className={styles.inner}>
+          <div className={styles["footer-message"]}>Online Youtube Downloader</div>
+          <div className={styles["footer-contact"]}>dreamgonfly@gmail.com</div>
+          <div className={styles["footer-copyright"]}>Copyright 2021 © All rights reserved.</div>
+        </div>
+      </footer>
+    </Fragment>
   );
 }
 

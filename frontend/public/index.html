@@ -1,21 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
+
+<head>
+  <meta charset="utf-8" />
+
+  <meta name="description" content="Youtube downloader online service" />
+  <meta name="keywords" content="Download, Youtube" />
+  <meta name="author" content="Yongrae Jo" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+
+  <!-- Open Graph (Facebook, Linkedin) -->
+  <!-- https://ourcodeworld.com/public-media/articles/articleocw-56d1a6901b773.png -->
+  <meta propery="og:type" content="website" />
+  <!-- https://ogp.me/#types -->
+  <meta property="og:title" content="Website to download Youtube videos" />
+  <meta property="og:description" content="Download youtube video with ease." />
+  <meta property="og:image" content="%PUBLIC_URL%/mark.png" />
+  <meta property="og:url" content="https://www.dryoutube.com" />
+  <meta property="og:site_name" content="Online Youtube Downloader" />
+
+  <!-- twitter card (Twitter) -->
+  <!-- https://csharpcorner-mindcrackerinc.netdna-ssl.com/article/twitter-cards-implementation-with-websites/Images/summary_card_tweet.png -->
+  <meta name="twitter:card" content="summary" />
+  <!-- card 종류: summary, photo, player -->
+  <meta name="twitter:title" content="Website to download Youtube videos" />
+  <meta name="twitter:description" content="Download youtube video with ease." />
+  <meta name="twitter:image" content="%PUBLIC_URL%/mark.png" />
+  <meta name="twitter:url" content="https://www.dryoutube.org" />
+  <meta name="twitter:creator" content="Yongrae Jo" />
+
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <!-- iPhone favicon -->
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
+  <!-- IE favicon-->
+  <link rel="short icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico" />
+
+  <!-- https://necolas.github.io/normalize.css -->
+  <link rel="stylesheet" href="%PUBLIC_URL%/nomalize.css" />
+  <!-- https://fontawesome.com -->
+  <script src="https://kit.fontawesome.com/f1def33959.js" crossorigin="anonymous"></script>
+  <!-- Spoca Han Sans Neo: https://spoqa.github.io/spoqa-han-sans/ko-KR/ -->
+  <link href="//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet" type="text/css" />
+
+  <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
       Only files inside the `public` folder can be referenced from the HTML.
@@ -24,12 +59,13 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
+  <title>React App</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+  <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
 
@@ -39,5 +75,6 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-  </body>
+</body>
+
 </html>
