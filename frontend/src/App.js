@@ -1,21 +1,22 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState, useEffect, useRef } from 'react';
 import api from './api';
 import url from './url';
 import styles from './index.module.css';
 import Loader from "react-loader-spinner";
 
 function App() {
-  const [enteredInput, setEnteredInput] = useState('');
   const [data, setData] = useState({ Thumbnail: "", Name: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(undefined)
   const [optionOpen, setOptionOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const inputRef = useRef()
+
   useEffect(() => {
     const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
     if (videoIdFromQuery !== null) {
-      setEnteredInput(url.reconstructYoutubeURL(videoIdFromQuery))
+      inputRef.current.value = url.reconstructYoutubeURL(videoIdFromQuery)
       api.preview(videoIdFromQuery).then((res) => {
         setData(res.data)
         setSelectedIndex(res.data.Formats[0].FormatId)
@@ -26,15 +27,11 @@ function App() {
     }
   }, [])
 
-  const inputChangeHandler = (event) => {
-    setEnteredInput(event.target.value);
-  };
-
   const previewClickHandler = (event) => {
-    const isValidURL = url.isValidURL(enteredInput)
-    let videoId = enteredInput
+    const isValidURL = url.isValidURL(inputRef.current.value)
+    let videoId = inputRef.current.value
     if (isValidURL) {
-      videoId = url.extractVideoIdFromURL(enteredInput)
+      videoId = url.extractVideoIdFromURL(inputRef.current.value)
     }
     setVideoId(videoId)
     api.preview(videoId).then((res) => {
@@ -169,7 +166,7 @@ function App() {
           </div>
           <div className={styles["input-container"]}>
             <div className={styles["input-logo"]}><img className={styles["logo-img"]} src="logo.png" alt="" /></div>
-            <input className={styles["input-bar"]} type="text" placeholder="Put your video link here" value={enteredInput} onChange={inputChangeHandler}></input>
+            <input ref={inputRef} className={styles["input-bar"]} type="text" placeholder="Put your video link here"></input>
             <button className={styles["input-button"]} onClick={previewClickHandler}><i className="fas fa-play"></i></button>
           </div>
         </div>
