@@ -111,7 +111,7 @@ function App() {
       width={20}
     />
   } else {
-    LoadingIcon = "Open In New Tab"
+    LoadingIcon = <span><i className={`fas fa-external-link-alt ${styles["external"]}`}></i>Open In New Tab</span>
   }
 
   let outputBlock = <div></div>

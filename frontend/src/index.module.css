@@ -233,6 +233,7 @@ section.output {
 
 .external {
   color: rgb(142, 203, 250);
+  margin: 0 0.5rem;
 }
 
 footer {
