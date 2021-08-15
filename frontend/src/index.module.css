@@ -202,6 +202,10 @@ section.output {
   display: flex;
 }
 
+.output-link {
+  width: 80%;
+}
+
 .output-download-button {
   width: 100%;
   text-align: center;

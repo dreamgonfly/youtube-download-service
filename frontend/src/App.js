@@ -9,7 +9,8 @@ function App() {
   const [enteredInput, setEnteredInput] = useState('');
   const [data, setData] = useState({ Thumbnail: "", Name: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(undefined)
+  const [optionOpen, setOptionOpen] = useState(false)
 
   if (firstView) {
     const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
@@ -41,6 +42,7 @@ function App() {
     api.preview(videoId).then((res) => {
       console.log(res)
       setData(res.data)
+      setSelectedIndex(res.data.Formats[0].FormatId)
       api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
         setData((prev) => { return { ...prev, Thumbnail: res.data.Thumbnail } })
       })
@@ -56,6 +58,19 @@ function App() {
       })
     }
     return viewClickHandler
+  }
+
+  let options = []
+  if (data.Formats.length > 0) {
+    options = data.Formats.filter((element) => { return element.FormatId !== selectedIndex })
+  }
+
+  const choiceClickHandler = () => {
+    setOptionOpen((prev) => { return !prev })
+  }
+
+  const optionClickHandler = (event) => {
+    setSelectedIndex(+event.currentTarget.dataset.index)
   }
 
   // const data = {
@@ -76,8 +91,15 @@ function App() {
   //   ]
   // }
 
+  let optionsBlock = undefined
+  if (optionOpen) {
+    optionsBlock = <div className={styles["output-format-options"]}>
+      {options.map((item, index) => { console.log("index", index); return <div key={index} data-index={item.FormatId} className={styles["option-desc"]} onClick={optionClickHandler}>{item.Ext} {item.FormatNote} {Math.round(item.Filesize / 1000 / 1000 * 10) / 10} MB</div> })}
+    </div>
+  }
+
   let outputBlock = <div></div>
-  if (data.Formats.length > 0) {
+  if (data.Formats.length > 0 && selectedIndex) {
     outputBlock = <div className={styles["output-card"]}>
       <div className={styles["output-content"]}>
         <div className={styles["output-thumbnail"]}>
@@ -88,18 +110,13 @@ function App() {
       </div>
       <div className={styles["output-download"]}>
         <div className={styles["output-format-choice"]}>
-          <div className={styles["format-desc"]}>MP4 360p 148MB</div>
-          <div className={styles["format-choice-arrow"]}><i className={`fas fa-caret-down ${styles["arrow-down"]}`}></i></div>
+          <div className={styles["format-desc"]}>{data.Formats.find(element => element.FormatId === selectedIndex).Ext} {data.Formats.find(element => element.FormatId === selectedIndex).FormatNote} {Math.round(data.Formats.find(element => element.FormatId === selectedIndex).Filesize / 1000 / 1000 * 10) / 10} MB</div>
+          <div className={styles["format-choice-arrow"]} onClick={choiceClickHandler}><i className={`fas fa-caret-down ${styles["arrow-down"]}`}></i></div>
         </div>
-        <div className={styles["output-format-options"]}>
-          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
-          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
-          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
-          <div className={styles["option-desc"]}>MP4 360p 148MB</div>
-        </div>
+        {optionsBlock}
         <div className={styles["output-action"]}>
-          <a href={api.composeDownloadLink(videoId, data.Formats[selectedIndex].FormatId, data.Name + "." + data.Formats[selectedIndex].Ext)}><button className={styles["output-download-button"]}>Download</button></a>
-          <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats[selectedIndex].FormatId, data.Name + "." + data.Formats[selectedIndex].Ext)}>
+          <a className={styles['output-link']} href={api.composeDownloadLink(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}><button className={styles["output-download-button"]}>Download</button></a>
+          <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}>
             <i className={`fas fa-external-link-alt ${styles["external"]}`}></i>
           </button>
         </div>
