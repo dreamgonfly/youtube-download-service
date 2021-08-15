@@ -14,7 +14,13 @@ const isValidURL = (input) => {
 
 const extractVideoIdFromURL = (url) => {
     const u = new URL(url)
-    return u.searchParams.get('v')
+    if (url.includes("youtube.com")) {
+        return u.searchParams.get('v')
+    }
+    if (url.includes("youtu.be")) {
+        return u.pathname.substring(1)  // Remove leftmost slash
+    }
+    return null
 }
 
 const url = { extractVideoIdFromURL, isValidURL, reconstructYoutubeURL }
