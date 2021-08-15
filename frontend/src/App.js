@@ -1,10 +1,8 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import api from './api';
 import url from './url';
 import styles from './index.module.css';
 import Loader from "react-loader-spinner";
-
-let firstView = true
 
 function App() {
   const [enteredInput, setEnteredInput] = useState('');
@@ -14,21 +12,19 @@ function App() {
   const [optionOpen, setOptionOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  if (firstView) {
+  useEffect(() => {
     const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
     if (videoIdFromQuery !== null) {
-      console.log("videoIdFromQuery", videoIdFromQuery)
       setEnteredInput(url.reconstructYoutubeURL(videoIdFromQuery))
       api.preview(videoIdFromQuery).then((res) => {
-        console.log(res)
         setData(res.data)
-        api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
+        setSelectedIndex(res.data.Formats[0].FormatId)
+        api.updateThumbnail(videoIdFromQuery, res.data.Thumbnail, res.data.Name).then((res) => {
           setData((prev) => { return { ...prev, Thumbnail: res.data.Thumbnail } })
         })
       })
-      firstView = false
     }
-  }
+  }, [])
 
   const inputChangeHandler = (event) => {
     setEnteredInput(event.target.value);
@@ -42,7 +38,6 @@ function App() {
     }
     setVideoId(videoId)
     api.preview(videoId).then((res) => {
-      console.log(res)
       setData(res.data)
       setSelectedIndex(res.data.Formats[0].FormatId)
       api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
