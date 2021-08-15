@@ -71,6 +71,7 @@ function App() {
 
   const optionClickHandler = (event) => {
     setSelectedIndex(event.currentTarget.dataset.index)
+    setOptionOpen(false)
   }
 
   // const data = {
