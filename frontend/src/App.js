@@ -70,7 +70,7 @@ function App() {
   }
 
   const optionClickHandler = (event) => {
-    setSelectedIndex(+event.currentTarget.dataset.index)
+    setSelectedIndex(event.currentTarget.dataset.index)
   }
 
   // const data = {
@@ -94,7 +94,7 @@ function App() {
   let optionsBlock = undefined
   if (optionOpen) {
     optionsBlock = <div className={styles["output-format-options"]}>
-      {options.map((item, index) => { console.log("index", index); return <div key={index} data-index={item.FormatId} className={styles["option-desc"]} onClick={optionClickHandler}>{item.Ext} {item.FormatNote} {Math.round(item.Filesize / 1000 / 1000 * 10) / 10} MB</div> })}
+      {options.map((item, index) => { return <div key={index} data-index={item.FormatId} className={styles["option-desc"]} onClick={optionClickHandler}>{item.Ext} {item.FormatNote} {Math.round(item.Filesize / 1000 / 1000 * 10) / 10} MB</div> })}
     </div>
   }
 
