@@ -203,7 +203,7 @@ section.output {
 }
 
 .output-link {
-  width: 80%;
+  width: 100%;
 }
 
 .output-download-button {
@@ -219,12 +219,16 @@ section.output {
 }
 
 .output-view {
+  width: 100%;
   text-align: center;
   font-size: 1rem;
   line-height: 1rem;
   background-color: #fff;
+  color: rgb(142, 203, 250);
+  font-size: 1.3rem;
+  font-weight: bold;
   border: 0.2rem solid rgb(142, 203, 250);
-  padding: 0 1rem;
+  padding: 0.5rem 0rem;
 }
 
 .external {

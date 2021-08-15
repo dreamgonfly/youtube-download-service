@@ -104,7 +104,7 @@ function App() {
       width={20}
     />
   } else {
-    LoadingIcon = <i className={`fas fa-external-link-alt ${styles["external"]}`}></i>
+    LoadingIcon = "Open In New Tab"
   }
 
   let outputBlock = <div></div>
@@ -126,11 +126,15 @@ function App() {
           <div className={styles["format-choice-arrow"]} onClick={choiceClickHandler}><i className={`fas fa-caret-down ${styles["arrow-down"]}`}></i></div>
         </div>
         {optionsBlock}
-        <div className={styles["output-action"]}>
-          <a className={styles['output-link']} href={api.composeDownloadLink(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}><button className={styles["output-download-button"]}>Download</button></a>
-          <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}>
-            {LoadingIcon}
-          </button>
+        <div>
+          <div className={styles["output-action"]}>
+            <a className={styles['output-link']} href={api.composeDownloadLink(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}><button className={styles["output-download-button"]}>Download</button></a>
+          </div>
+          <div className={styles["output-action"]}>
+            <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}>
+              {LoadingIcon}
+            </button>
+          </div>
         </div>
       </div>
     </div>
