@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"youtube-download-backend/internal/extract"
 	"youtube-download-backend/internal/gcs"
+	"youtube-download-backend/internal/videoinfo"
 	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
@@ -46,7 +46,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			}
 		}()
 
-		description, info, err := s.youtubedl.Preview(id, tempDir)
+		descriptionPath, infoPath, err := s.youtubedl.Preview(id, tempDir)
 		if err != nil {
 			err = errors.Wrap(err, "could not download preview")
 			// TODO: logging
@@ -54,42 +54,10 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		formats, err := extract.ExtractFormatsFromInfo(info)
-		if err != nil {
-			err = errors.Wrap(err, "could not extract formats")
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		thumbnails, err := extract.ExtractThumbnails(info)
-		if err != nil {
-			err = errors.Wrap(err, "could not extract thumbnails")
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		last_thumbnail := thumbnails[len(thumbnails)-1]
-		var filteredFormats []extract.Format
-		for _, format := range formats {
-			if format.FormatId == "18" || format.FormatId == "22" {
-				filteredFormats = append(filteredFormats, format)
-			}
-		}
-
-		var estimatedFormats []extract.Format
-		for _, format := range filteredFormats {
-			if format.Filesize == 0 {
-				format.Filesize, err = extract.EstimateFilesize(format.FormatNote, info)
-				// TODO: log estimation err
-			}
-			estimatedFormats = append(estimatedFormats, format)
-		}
 
 		go func() {
-			key := filepath.Join("videos", id, filepath.Base(description))
-			err = gcs.UploadFile(s.context, s.gcsClient, description, key)
+			key := filepath.Join("videos", id, filepath.Base(descriptionPath))
+			err = gcs.UploadFile(s.context, s.gcsClient, descriptionPath, key)
 			if err != nil {
 				err = errors.Wrap(err, "could not upload description")
 				log.Println(err)
@@ -99,8 +67,8 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			close(uploadDescriptionDone)
 		}()
 		go func() {
-			key := filepath.Join("videos", id, filepath.Base(info))
-			err = gcs.UploadFile(s.context, s.gcsClient, info, key)
+			key := filepath.Join("videos", id, filepath.Base(infoPath))
+			err = gcs.UploadFile(s.context, s.gcsClient, infoPath, key)
 			if err != nil {
 				err = errors.Wrap(err, "could not upload info")
 				log.Println(err)
@@ -110,31 +78,42 @@ func (s *Server) handlePreview() http.HandlerFunc {
 			close(uploadInfoDone)
 		}()
 
+		info, err := videoinfo.NewInfo(infoPath)
+		if err != nil {
+			err = errors.Wrap(err, "could not extract info")
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		var filteredFormats []videoinfo.Format
+		for _, format := range info.Formats {
+			if format.FormatId == "18" || format.FormatId == "22" {
+				filteredFormats = append(filteredFormats, format)
+			}
+		}
+
+		var estimatedFormats []videoinfo.Format
+		for _, format := range filteredFormats {
+			if format.Filesize == 0 {
+				format.Filesize, err = videoinfo.EstimateFilesize(format.FormatNote, info.DurationSecond)
+				// TODO: log estimation err
+			}
+			estimatedFormats = append(estimatedFormats, format)
+		}
+
+		lastThumbnail := info.Thumbnails[len(info.Thumbnails)-1]
+
 		type Output struct {
 			Title          string
 			DurationSecond float64
 			Thumbnail      string
 			Name           string
-			Formats        []extract.Format
+			Formats        []videoinfo.Format
 		}
 
-		title, err := extract.ExtractTitle(info)
-		if err != nil {
-			err = errors.Wrap(err, "could not extract title")
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		duration, err := extract.ExtractDuration(info)
-		if err != nil {
-			err = errors.Wrap(err, "could not extract duration")
-			// TODO: logging
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		o := Output{Title: title, DurationSecond: duration, Thumbnail: last_thumbnail.URL, Name: youtubefile.Stem(filepath.Base(description)), Formats: estimatedFormats}
+		o := Output{Title: info.Title, DurationSecond: info.DurationSecond, Thumbnail: lastThumbnail.URL, Name: youtubefile.Stem(filepath.Base(descriptionPath)), Formats: estimatedFormats}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(o)
