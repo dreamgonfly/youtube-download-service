@@ -70,7 +70,7 @@ func TestHandlePreview(t *testing.T) {
 		t.Fatalf("could not read value: %v", err)
 	}
 	actual_formats := string(bytes.TrimSpace(value))
-	expected_formats := `{"Thumbnail":"https://i.ytimg.com/vi/GSVsfCCtRr0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==\u0026rs=AOn4CLCJj9t8x2PEsTiw4J3l8_nz6kRv0A","Name":"[기생충] 30초 예고","Formats":[{"Filesize":1348634,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":2059470,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]}`
+	expected_formats := `{"Title":"[기생충] 30초 예고","DurationSecond":30,"Thumbnail":"https://i.ytimg.com/vi/GSVsfCCtRr0/hqdefault.jpg?sqp=-oaymwEcCNACELwBSFXyq4qpAw4IARUAAIhCGAFwAcABBg==\u0026rs=AOn4CLCJj9t8x2PEsTiw4J3l8_nz6kRv0A","Name":"[기생충] 30초 예고","Formats":[{"Filesize":1348634,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":2059470,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]}`
 	assert.Equal(t, expected_formats, actual_formats, "formats mismatch")
 }
 func TestHandlePreviewWithDashVideoId(t *testing.T) {
@@ -101,7 +101,7 @@ func TestHandlePreviewWithDashVideoId(t *testing.T) {
 		t.Fatalf("could not read value: %v", err)
 	}
 	actual_formats := string(bytes.TrimSpace(value))
-	expected_formats := `{"Thumbnail":"https://i.ytimg.com/vi_webp/-BIDXOp6_LA/maxresdefault.webp","Name":"Go Modules - Dependency Management the Right Way","Formats":[{"Filesize":75134269,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":210958377,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]}`
+	expected_formats := `{"Title":"Go Modules: Dependency Management the Right Way","DurationSecond":3073,"Thumbnail":"https://i.ytimg.com/vi_webp/-BIDXOp6_LA/maxresdefault.webp","Name":"Go Modules - Dependency Management the Right Way","Formats":[{"Filesize":75134269,"FormatId":"18","FormatNote":"360p","Ext":"mp4"},{"Filesize":210958377,"FormatId":"22","FormatNote":"720p","Ext":"mp4"}]}`
 	assert.Equal(t, expected_formats, actual_formats, "formats mismatch")
 }
 

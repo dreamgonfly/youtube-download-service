@@ -50,6 +50,22 @@ func ExtractFormatsFromInfo(path string) ([]Format, error) {
 	return formats, nil
 }
 
+func ExtractTitle(info string) (string, error) {
+	jsonFile, err := os.Open(info)
+	if err != nil {
+		return "", errors.Wrap(err, "could not open info file")
+	}
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return "", errors.Wrap(err, "could not read info")
+	}
+
+	result := gjson.Get(string(byteValue), "title").String()
+	return result, nil
+}
+
 func ExtractDuration(info string) (float64, error) {
 	jsonFile, err := os.Open(info)
 	if err != nil {

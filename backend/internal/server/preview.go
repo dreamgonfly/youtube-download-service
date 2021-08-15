@@ -111,11 +111,30 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		}()
 
 		type Output struct {
-			Thumbnail string
-			Name      string
-			Formats   []extract.Format
+			Title          string
+			DurationSecond float64
+			Thumbnail      string
+			Name           string
+			Formats        []extract.Format
 		}
-		o := Output{Thumbnail: last_thumbnail.URL, Name: youtubefile.Stem(filepath.Base(description)), Formats: estimatedFormats}
+
+		title, err := extract.ExtractTitle(info)
+		if err != nil {
+			err = errors.Wrap(err, "could not extract title")
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		duration, err := extract.ExtractDuration(info)
+		if err != nil {
+			err = errors.Wrap(err, "could not extract duration")
+			// TODO: logging
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		o := Output{Title: title, DurationSecond: duration, Thumbnail: last_thumbnail.URL, Name: youtubefile.Stem(filepath.Base(description)), Formats: estimatedFormats}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(o)
