@@ -2,6 +2,7 @@ import React, { Fragment, useState } from 'react';
 import api from './api';
 import url from './url';
 import styles from './index.module.css';
+import Loader from "react-loader-spinner";
 
 let firstView = true
 
@@ -11,6 +12,7 @@ function App() {
   const [videoId, setVideoId] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(undefined)
   const [optionOpen, setOptionOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   if (firstView) {
     const videoIdFromQuery = url.extractVideoIdFromURL(window.location.href)
@@ -51,7 +53,9 @@ function App() {
 
   const viewClickHandlerConstructur = (id, format, filename) => {
     const viewClickHandler = () => {
+      setLoading(true)
       api.save(id, format, filename).then((res) => {
+        setLoading(false)
         // Secure solution. https://stackoverflow.com/questions/45046030/maintaining-href-open-in-new-tab-with-an-onclick-handler-in-react
         const newWindow = window.open(res.data.URL, '_blank', 'noopener,noreferrer')
         if (newWindow) newWindow.opener = null
@@ -99,6 +103,18 @@ function App() {
     </div>
   }
 
+  let LoadingIcon = undefined
+  if (loading) {
+    LoadingIcon = <Loader
+      type="TailSpin"
+      color="#00BFFF"
+      height={20}
+      width={20}
+    />
+  } else {
+    LoadingIcon = <i className={`fas fa-external-link-alt ${styles["external"]}`}></i>
+  }
+
   let outputBlock = <div></div>
   if (data.Formats.length > 0 && selectedIndex) {
     const minutes = Math.floor(data.DurationSecond / 60)
@@ -121,7 +137,7 @@ function App() {
         <div className={styles["output-action"]}>
           <a className={styles['output-link']} href={api.composeDownloadLink(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}><button className={styles["output-download-button"]}>Download</button></a>
           <button className={styles["output-view"]} onClick={viewClickHandlerConstructur(videoId, data.Formats.find(element => element.FormatId === selectedIndex).FormatId, data.Name + "." + data.Formats.find(element => element.FormatId === selectedIndex).Ext)}>
-            <i className={`fas fa-external-link-alt ${styles["external"]}`}></i>
+            {LoadingIcon}
           </button>
         </div>
       </div>
