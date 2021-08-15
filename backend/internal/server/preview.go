@@ -36,7 +36,7 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		}
 		uploadDescriptionDone := make(chan struct{})
 		uploadInfoDone := make(chan struct{})
-		go func() {
+		defer func() {
 			<-uploadDescriptionDone
 			<-uploadInfoDone
 			err := os.RemoveAll(tempDir)
