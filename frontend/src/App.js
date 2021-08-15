@@ -167,7 +167,7 @@ function App() {
           <div className={styles["input-container"]}>
             <div className={styles["input-logo"]}><img className={styles["logo-img"]} src="logo.png" alt="" /></div>
             <input ref={inputRef} className={styles["input-bar"]} type="text" placeholder="Put your video link here"></input>
-            <button className={styles["input-button"]} onClick={previewClickHandler}><i className="fas fa-play"></i></button>
+            <button className={styles["input-button"]} onClick={previewClickHandler}>Go</button>
           </div>
         </div>
       </section>
