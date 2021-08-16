@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"youtube-download-backend/internal/gcs"
@@ -35,7 +34,7 @@ func NewServer(ctx context.Context, c youtubefile.Commander, g gcs.Clienter, h h
 	return s
 }
 
-// Make Server an http.Handle
+// Make server a http.Handle
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.enableCORS(&w)
 	if r.Method == "OPTIONS" { // Handling pre-flight OPTIONS requests
@@ -44,8 +43,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
 }
 
-func (s *Server) handleHello() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello!\n")
-	}
+func (s *Server) enableCORS(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }

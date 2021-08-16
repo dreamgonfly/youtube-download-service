@@ -32,8 +32,8 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		var t ThumbnailRequest
-		err := json.NewDecoder(r.Body).Decode(&t)
+		var thumbnailRequest ThumbnailRequest
+		err := json.NewDecoder(r.Body).Decode(&thumbnailRequest)
 		defer r.Body.Close()
 		if err != nil {
 			err := errors.Wrap(err, "could not parse request body")
@@ -41,43 +41,38 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 			return
 		}
 
-		tf, err := ioutil.TempFile("", "")
+		tempFile, err := ioutil.TempFile("", "")
 		if err != nil {
-			err = errors.Wrap(err, "could not create temp dir")
-			log.Println(err)
-			// TODO: logging
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer os.Remove(tf.Name())
-		u, err := url.Parse(t.URL)
-		if err != nil {
-			err = errors.Wrapf(err, "could not parse thumbnail url (%s)", t.URL)
-			// TODO: logging
+			err = errors.Wrap(err, "could not create temp file")
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		err = httpfile.DownloadFile(s.httpClient, t.URL, tf.Name())
+		defer os.Remove(tempFile.Name())
+
+		u, err := url.Parse(thumbnailRequest.URL)
 		if err != nil {
-			err = errors.Wrapf(err, "could not download thumbnail url (%s)", t.URL)
-			// TODO: logging
+			err = errors.Wrapf(err, "could not parse thumbnail url (%s)", thumbnailRequest.URL)
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		thumbnailKey := filepath.Join("videos", id, t.Name+filepath.Ext(u.Path))
-		err = gcs.UploadFile(s.context, s.gcsClient, tf.Name(), thumbnailKey)
+		err = httpfile.DownloadFile(s.httpClient, thumbnailRequest.URL, tempFile.Name())
 		if err != nil {
-			err = errors.Wrap(err, "could not upload preview")
+			err = errors.Wrapf(err, "could not download thumbnail url (%s)", thumbnailRequest.URL)
 			log.Println(err)
-			// TODO: logging
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		type Output struct {
-			Thumbnail string
+
+		thumbnailKey := filepath.Join("videos", id, thumbnailRequest.Name+filepath.Ext(u.Path))
+		err = gcs.UploadFile(s.context, s.gcsClient, tempFile.Name(), thumbnailKey)
+		if err != nil {
+			err = errors.Wrap(err, "could not upload thumbnail")
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey, 15*time.Minute)
@@ -86,16 +81,21 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		o := Output{Thumbnail: signedURL}
+
+		output := struct {
+			Thumbnail string
+		}{
+			Thumbnail: signedURL,
+		}
 
 		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(o)
+		err = json.NewEncoder(w).Encode(output)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if err := tf.Close(); err != nil {
+		if err := tempFile.Close(); err != nil {
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

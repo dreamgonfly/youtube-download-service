@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const BUFFER_SIZE = 1024
+const BUFFER_SIZE = 1024 // 1024 bytes
 
 func (s *Server) handleDownload() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,6 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
 			log.Println(err)
-			// TODO: logging
 			w.Header().Del("Content-Disposition")
 			w.Header().Del("Content-Type")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -94,6 +93,7 @@ func (s *Server) StreamDownload(cmd youtubefile.Outputer, filename string, w htt
 		} else {
 			return errors.New("could not flush http")
 		}
+
 		// reset buffer
 		for i := 0; i < n; i++ {
 			buffer[i] = 0

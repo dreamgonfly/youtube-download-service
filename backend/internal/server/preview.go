@@ -29,59 +29,28 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		tempDir, err := ioutil.TempDir("", "")
 		if err != nil {
 			err = errors.Wrap(err, "could not create temp dir")
-			// TODO: logging
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		uploadDescriptionDone := make(chan struct{})
-		uploadInfoDone := make(chan struct{})
-		defer func() {
-			<-uploadDescriptionDone
-			<-uploadInfoDone
-			err := os.RemoveAll(tempDir)
-			if err != nil {
-				err = errors.Wrap(err, "could not remove tempDir")
-				log.Println(err)
-			}
-		}()
 
 		descriptionPath, infoPath, err := s.youtubedl.Preview(id, tempDir)
 		if err != nil {
 			err = errors.Wrap(err, "could not download preview")
-			// TODO: logging
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		go func() {
-			key := filepath.Join("videos", id, filepath.Base(descriptionPath))
-			err = gcs.UploadFile(s.context, s.gcsClient, descriptionPath, key)
-			if err != nil {
-				err = errors.Wrap(err, "could not upload description")
-				log.Println(err)
-				// TODO: logging
-				return
-			}
-			close(uploadDescriptionDone)
-		}()
-		go func() {
-			key := filepath.Join("videos", id, filepath.Base(infoPath))
-			err = gcs.UploadFile(s.context, s.gcsClient, infoPath, key)
-			if err != nil {
-				err = errors.Wrap(err, "could not upload info")
-				log.Println(err)
-				// TODO: logging
-				return
-			}
-			close(uploadInfoDone)
-		}()
+		uploadDescriptionDone := make(chan struct{})
+		uploadInfoDone := make(chan struct{})
+		go s.UploadLocalFile(id, descriptionPath, uploadDescriptionDone)
+		go s.UploadLocalFile(id, infoPath, uploadInfoDone)
+		defer s.CleanupTempDir(tempDir, uploadDescriptionDone, uploadInfoDone)
 
 		info, err := videoinfo.NewInfo(infoPath)
 		if err != nil {
 			err = errors.Wrap(err, "could not extract info")
-			// TODO: logging
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -98,29 +67,58 @@ func (s *Server) handlePreview() http.HandlerFunc {
 		for _, format := range filteredFormats {
 			if format.Filesize == 0 {
 				format.Filesize, err = videoinfo.EstimateFilesize(format.FormatNote, info.DurationSecond)
-				// TODO: log estimation err
+				if err != nil {
+					err = errors.Wrap(err, "could not estimate file size")
+					log.Println(err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			}
 			estimatedFormats = append(estimatedFormats, format)
 		}
 
 		lastThumbnail := info.Thumbnails[len(info.Thumbnails)-1]
 
-		type Output struct {
+		output := struct {
 			Title          string
 			DurationSecond float64
 			Thumbnail      string
 			Name           string
 			Formats        []videoinfo.Format
+		}{
+			Title:          info.Title,
+			DurationSecond: info.DurationSecond,
+			Thumbnail:      lastThumbnail.URL,
+			Name:           youtubefile.Stem(filepath.Base(descriptionPath)),
+			Formats:        estimatedFormats,
 		}
 
-		o := Output{Title: info.Title, DurationSecond: info.DurationSecond, Thumbnail: lastThumbnail.URL, Name: youtubefile.Stem(filepath.Base(descriptionPath)), Formats: estimatedFormats}
-
 		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(o)
+		err = json.NewEncoder(w).Encode(output)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
+}
+
+func (s *Server) CleanupTempDir(tempDir string, uploadDescriptionDone chan struct{}, uploadInfoDone chan struct{}) {
+	<-uploadDescriptionDone
+	<-uploadInfoDone
+	err := os.RemoveAll(tempDir)
+	if err != nil {
+		err = errors.Wrap(err, "could not remove tempDir")
+		log.Println(err)
+	}
+}
+
+func (s *Server) UploadLocalFile(id string, path string, done chan struct{}) {
+	key := filepath.Join("videos", id, filepath.Base(path))
+	err := gcs.UploadFile(s.context, s.gcsClient, path, key)
+	if err != nil {
+		err = errors.Wrap(err, "could not upload to gcs")
+		log.Println(err)
+	}
+	close(done)
 }
