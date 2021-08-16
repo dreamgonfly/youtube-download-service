@@ -1,0 +1,58 @@
+.title-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 0 auto;
+}
+
+.title-logo {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+.title-desc {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.input-container {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+}
+
+.input-logo {
+    width: 15%;
+    text-align: center;
+    font-size: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.logo-img {
+    max-width: 100%;
+    height: 100%;
+}
+
+.input-bar {
+    width: 50%;
+    padding: 0 1rem;
+    border: 7px solid rgb(142, 203, 250);
+}
+
+.input-button {
+    width: 12%;
+    background-color: rgb(142, 203, 250);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}

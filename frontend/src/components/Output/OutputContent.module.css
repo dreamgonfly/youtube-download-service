@@ -1,0 +1,21 @@
+.output-content {
+    width: 48%;
+}
+
+.img {
+    max-width: 100%;
+}
+
+.output-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.output-length {
+    font-size: 1rem;
+    color: #949393;
+}

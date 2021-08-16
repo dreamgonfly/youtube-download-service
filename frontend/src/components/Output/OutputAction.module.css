@@ -1,0 +1,71 @@
+.output-download {
+    width: 48%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.output-format-choice {
+    width: 100%;
+    /* margin: 3rem auto 2rem auto; */
+    display: flex;
+    /* justify-content: center; */
+}
+
+.format-desc {
+    width: 80%;
+    background-color: rgb(142, 203, 250);
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.format-choice-arrow {
+    width: 20%;
+    background-color: rgb(63, 143, 198);
+    color: #fff;
+    padding: 0.3rem 1rem;
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.output-action {
+    width: 100%;
+    display: flex;
+}
+
+.output-link {
+    width: 100%;
+}
+
+.output-download-button {
+    width: 100%;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    /* line-height: 1.5rem; */
+    background-color: rgb(142, 203, 250);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 0rem;
+}
+
+.output-view {
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+    line-height: 1rem;
+    background-color: #fff;
+    color: rgb(142, 203, 250);
+    font-size: 1.3rem;
+    font-weight: bold;
+    border: 0.2rem solid rgb(142, 203, 250);
+    padding: 0.5rem 0rem;
+}
