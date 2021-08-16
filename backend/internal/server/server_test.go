@@ -209,14 +209,14 @@ func TestHandleDownloadWithFilename(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestHandleSave(t *testing.T) {
+func TestHandlePlay(t *testing.T) {
 	ctx := context.Background()
 	c := execmock.Command
 	g := &gcsmock.Client{}
 	h := &httpmock.Client{}
 	sf := gcsmock.SignedURL
 	srv := httptest.NewServer(server.NewServer(ctx, c, g, h, sf))
-	url := fmt.Sprintf("%s/save/GSVsfCCtRr0?format=18", srv.URL)
+	url := fmt.Sprintf("%s/play/GSVsfCCtRr0?format=18", srv.URL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		t.Fatalf("could not create GET request: %v", err)

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"youtube-download-backend/internal/config"
+	. "youtube-download-backend/internal/config"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/youtubefile"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *Server) handleSave() http.HandlerFunc {
+func (s *Server) handlePlay() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		id := params["id"]
@@ -88,7 +88,7 @@ func (s *Server) StreamSave(cmd youtubefile.Outputer, key string) error {
 	ctx, cancel := context.WithTimeout(s.context, 1*time.Hour)
 	defer cancel()
 
-	wc := s.gcsClient.Bucket(config.Conf.Bucket).Object(key).NewWriter(ctx)
+	wc := s.gcsClient.Bucket(Config.Bucket).Object(key).NewWriter(ctx)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
