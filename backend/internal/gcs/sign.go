@@ -13,7 +13,7 @@ import (
 type SignFunc func(bucket, name string, opts *storage.SignedURLOptions) (string, error)
 
 // https://cloud.google.com/storage/docs/access-control/signing-urls-with-helpers#storage-signed-url-object-go
-func GenerateV4GetObjectSignedURL(sign SignFunc, key string) (string, error) {
+func GenerateV4GetObjectSignedURL(sign SignFunc, key string, duration time.Duration) (string, error) {
 	// bucket := "bucket-name"
 	// object := "object-name"
 	// serviceAccount := "service_account.json"
@@ -31,7 +31,7 @@ func GenerateV4GetObjectSignedURL(sign SignFunc, key string) (string, error) {
 		Method:         "GET",
 		GoogleAccessID: conf.Email,
 		PrivateKey:     conf.PrivateKey,
-		Expires:        time.Now().Add(15 * time.Minute),
+		Expires:        time.Now().Add(duration),
 	}
 	u, err := sign(config.Conf.Bucket, key, opts)
 	if err != nil {

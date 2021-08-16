@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/httpfile"
 
@@ -79,7 +80,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 			Thumbnail string
 		}
 
-		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey)
+		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey, 15*time.Minute)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

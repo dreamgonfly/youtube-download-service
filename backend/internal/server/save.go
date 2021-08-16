@@ -63,7 +63,7 @@ func (s *Server) handleSave() http.HandlerFunc {
 			return
 		}
 
-		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, key)
+		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, key, 3*time.Hour)
 
 		output := struct {
 			Filename string
