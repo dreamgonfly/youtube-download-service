@@ -1,5 +1,5 @@
 .output-card {
-    width: 50%;
+    width: 75%;
     display: flex;
     justify-content: space-between;
     margin: 6rem auto;
@@ -13,4 +13,10 @@
     justify-content: center;
     text-align: center;
     margin: 6rem auto;
+}
+
+@media only screen and (max-width: 980px) {
+    .output-card {
+        width: 100%;
+    }
 }
