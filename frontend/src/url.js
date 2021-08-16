@@ -1,18 +1,26 @@
-const reconstructYoutubeURL = (id) => {
+export const getVideoId = (input) => {
+    if (isValidURL(input)) {
+        return extractVideoIdFromURL(input)
+    } else {
+        return input
+    }
+}
+
+
+export const reconstructYoutubeURL = (id) => {
     return `https://www.youtube.com/watch?v=${id}`
 }
 
-const isValidURL = (input) => {
-    let isValid = true
+export const isValidURL = (input) => {
     try {
         new URL(input)
     } catch (error) {
-        isValid = false
+        return false
     }
-    return isValid
+    return true
 }
 
-const extractVideoIdFromURL = (url) => {
+export const extractVideoIdFromURL = (url) => {
     const u = new URL(url)
     if (url.includes("youtube.com")) {
         return u.searchParams.get('v')
@@ -22,7 +30,3 @@ const extractVideoIdFromURL = (url) => {
     }
     return null
 }
-
-const url = { extractVideoIdFromURL, isValidURL, reconstructYoutubeURL }
-
-export default url

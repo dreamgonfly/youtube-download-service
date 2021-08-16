@@ -19,10 +19,10 @@ const OutputCard = (props) => {
         )
     }
 
-    if (props.data.Formats.length === 0) {
+    // Test for an empty object
+    if (Object.keys(props.data).length === 0) {
         return <div></div>
     }
-
 
     return (
         <div className={styles["output-card"]}>

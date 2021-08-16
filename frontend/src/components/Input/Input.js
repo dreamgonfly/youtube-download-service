@@ -1,21 +1,17 @@
 import React, { useRef } from 'react'
 import styles from './Input.module.css'
-import url from '../../url'
+import { reconstructYoutubeURL, getVideoId } from '../../url'
 
 const Input = (props) => {
     const inputRef = useRef()
 
     if (props.videoId !== "") {
-        inputRef.current.value = url.reconstructYoutubeURL(props.videoId)
+        inputRef.current.value = reconstructYoutubeURL(props.videoId)
     }
 
-    const previewClickHandler = (event) => {
-        const isValidURL = url.isValidURL(inputRef.current.value)
-        let videoId = inputRef.current.value
-        if (isValidURL) {
-            videoId = url.extractVideoIdFromURL(inputRef.current.value)
-        }
-        props.onSetVideoId(videoId)
+    const previewClickHandler = () => {
+        const videoId = getVideoId(inputRef.current.value)
+        props.onInput(videoId)
     }
 
     return (

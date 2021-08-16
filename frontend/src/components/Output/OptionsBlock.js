@@ -2,15 +2,7 @@ import React from "react"
 import styles from "./OptionsBlock.module.css"
 
 const OptionsBlock = (props) => {
-    const optionClickHandler = (event) => {
-        props.onSetSelectedIndex(event.currentTarget.dataset.index)
-        props.setOptionOpen(false)
-    }
-
-    let options = []
-    if (props.data.Formats.length > 0) {
-        options = props.data.Formats.filter((element) => { return element.FormatId !== props.selectedIndex })
-    }
+    const options = props.data.Formats.filter((element) => { return element.FormatId !== props.formatId })
 
     if (options.length === 0) {
         return (
@@ -18,6 +10,11 @@ const OptionsBlock = (props) => {
                 <div className={styles["option-desc"]}>No other options</div>
             </div>
         )
+    }
+
+    const optionClickHandler = (event) => {
+        props.onSetFormatId(event.currentTarget.dataset.index)
+        props.onSetOptionsOpen(false)
     }
 
     return (

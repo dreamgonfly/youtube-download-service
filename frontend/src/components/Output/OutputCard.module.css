@@ -1,16 +1,16 @@
 .output-card {
     width: 50%;
-    padding-left: 1.3rem;
     display: flex;
     justify-content: space-between;
     margin: 6rem auto;
+    padding-left: 1.3rem;
 }
 
 .output-spin {
     width: 50%;
-    margin: 6rem auto;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
+    margin: 6rem auto;
 }

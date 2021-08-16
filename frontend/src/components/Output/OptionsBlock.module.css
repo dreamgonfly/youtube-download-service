@@ -1,19 +1,19 @@
 .output-format-options {
     width: 80%;
-    border-color: rgb(142, 203, 250);
-    border-style: solid;
-    border-width: 0.3rem;
     position: absolute;
     top: 2.4rem;
+    border-width: 0.3rem;
+    border-style: solid;
+    border-color: rgb(142, 203, 250);
 }
 
 .option-desc {
-    background-color: #fff;
-    color: rgb(142, 203, 250);
-    font-weight: bold;
-    font-size: 1.2rem;
-    padding: 0.5rem 1rem;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: rgb(142, 203, 250);
 }

@@ -6,11 +6,6 @@ const axios = Axios.create({
     baseURL: BASE_URL,
 })
 
-const hello = () => {
-    return axios.get(`/hello`)
-}
-
-
 const preview = (id) => {
     return axios.get(`/preview/` + id)
 }
@@ -22,8 +17,8 @@ const updateThumbnail = (id, url, name) => {
     })
 }
 
-const save = (id, format, filename) => {
-    const url = new URL(`${BASE_URL}/save/${id}`)
+const play = (id, format, filename) => {
+    const url = new URL(`${BASE_URL}/play/${id}`)
     url.searchParams.append("format", format)
     url.searchParams.append("filename", filename)
     return axios.get(url.href)
@@ -36,6 +31,6 @@ const composeDownloadLink = (id, format, filename) => {
     return url.href
 }
 
-const api = { preview, hello, composeDownloadLink, updateThumbnail, save }
+const api = { preview, updateThumbnail, play, composeDownloadLink }
 
 export default api
