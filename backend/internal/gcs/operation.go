@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
-	"youtube-download-backend/internal/config"
+	. "youtube-download-backend/internal/config"
 
 	"github.com/pkg/errors"
 )
@@ -16,7 +16,7 @@ func DownloadFile(ctx context.Context, client Clienter, key string) ([]byte, err
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Hour)
 	defer cancel()
 
-	rc, err := client.Bucket(config.Conf.Bucket).Object(key).NewReader(ctx)
+	rc, err := client.Bucket(Config.Bucket).Object(key).NewReader(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Object(%q).NewReader", key)
 	}
@@ -40,7 +40,7 @@ func UploadFile(ctx context.Context, client Clienter, path, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Hour)
 	defer cancel()
 
-	wc := client.Bucket(config.Conf.Bucket).Object(key).NewWriter(ctx)
+	wc := client.Bucket(Config.Bucket).Object(key).NewWriter(ctx)
 	if _, err = io.Copy(wc, f); err != nil {
 		return errors.Wrap(err, "io.Copy")
 	}

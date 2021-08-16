@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"youtube-download-backend/internal/config"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/server"
 	"youtube-download-backend/internal/youtubefile"
@@ -18,6 +17,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+const DefaultPort = "8000"
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -26,6 +27,7 @@ func main() {
 }
 
 func run() error {
+	// dependencies
 	ctx := context.Background()
 	c := youtubefile.Command
 	gcsClient, err := storage.NewClient(ctx)
@@ -36,7 +38,8 @@ func run() error {
 	g := &gcs.Client{Client: gcsClient}
 	h := http.DefaultClient
 	sf := storage.SignedURL
-	srv := server.NewServer(ctx, c, g, h, sf)
+
+	app := server.NewServer(ctx, c, g, h, sf)
 	h2s := &http2.Server{
 		MaxReadFrameSize:             1 << 20, // Default value. 1MB
 		MaxUploadBufferPerConnection: 1 << 20, // Default value. 1MB
@@ -45,19 +48,19 @@ func run() error {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8000"
+		port = DefaultPort
 	}
 
 	addr := "0.0.0.0:" + port
 	server := &http.Server{
 		Addr:              addr,
-		Handler:           h2c.NewHandler(srv, h2s),
+		Handler:           h2c.NewHandler(app, h2s),
 		ReadTimeout:       0, // Default value.
 		ReadHeaderTimeout: 0, // Default value.
 		WriteTimeout:      0, // Default value.
 	}
 
-	log.Printf("Server up & running at %s on %s environment", addr, config.Env)
+	log.Printf("Server up & running at %s", addr)
 
 	return server.ListenAndServe()
 }

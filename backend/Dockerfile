@@ -1,7 +1,7 @@
 # Use the offical golang image to create a binary.
-# This is based on Debian and sets the GOPATH to /go.
-# https://hub.docker.com/_/golang
 FROM golang:1.16-buster as builder
+
+ENV LANG C.UTF-8
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -13,8 +13,8 @@ RUN apt-get update && \
 
 # Retrieve application dependencies.
 # This allows the container build to reuse cached dependencies.
-# Expecting to copy go.mod and if present go.sum.
-COPY go.* ./
+COPY go.mod ./go.mod
+COPY go.sum ./go.sum
 RUN go mod download
 
 # Copy local code to the container image.
@@ -24,13 +24,12 @@ COPY . ./
 RUN go build -v -o serve
 
 # Use the official Debian slim image for a lean production container.
-# https://hub.docker.com/_/debian
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
 FROM debian:buster-slim
 
 ENV LANG C.UTF-8
 
 WORKDIR /app
+
 RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl \
     python3 \

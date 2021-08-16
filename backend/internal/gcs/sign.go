@@ -3,7 +3,7 @@ package gcs
 import (
 	"os"
 	"time"
-	"youtube-download-backend/internal/config"
+	. "youtube-download-backend/internal/config"
 
 	"cloud.google.com/go/storage"
 	"github.com/pkg/errors"
@@ -14,9 +14,6 @@ type SignFunc func(bucket, name string, opts *storage.SignedURLOptions) (string,
 
 // https://cloud.google.com/storage/docs/access-control/signing-urls-with-helpers#storage-signed-url-object-go
 func GenerateV4GetObjectSignedURL(sign SignFunc, key string, duration time.Duration) (string, error) {
-	// bucket := "bucket-name"
-	// object := "object-name"
-	// serviceAccount := "service_account.json"
 	serviceAccount := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	jsonKey, err := os.ReadFile(serviceAccount)
 	if err != nil {
@@ -33,7 +30,7 @@ func GenerateV4GetObjectSignedURL(sign SignFunc, key string, duration time.Durat
 		PrivateKey:     conf.PrivateKey,
 		Expires:        time.Now().Add(duration),
 	}
-	u, err := sign(config.Conf.Bucket, key, opts)
+	u, err := sign(Config.Bucket, key, opts)
 	if err != nil {
 		return "", errors.Wrap(err, "storage.SignedURL")
 	}
