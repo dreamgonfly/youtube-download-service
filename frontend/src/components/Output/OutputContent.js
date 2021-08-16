@@ -12,7 +12,7 @@ const OutputContent = (props) => {
                 <img className={styles["img"]} src={props.data.Thumbnail} alt="thumbnail" />
             </div>
             <div className={styles["output-title"]}>{props.data.Title}</div>
-            <div className={styles["output-length"]}>{minutes}:{seconds}</div>
+            <div className={styles["output-length"]}>{minutes}:{String(seconds).padStart(2, "0")}</div>
         </div>
     )
 }
