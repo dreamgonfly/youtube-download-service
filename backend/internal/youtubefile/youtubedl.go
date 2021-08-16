@@ -30,23 +30,6 @@ func (y *YoutubeDl) GetFilenameWithFormat(id, format string) (string, error) {
 	return filename, nil
 }
 
-func (y *YoutubeDl) GetURL(id string, format string) (video string, err error) {
-	cmd := y.ExecCommand(
-		"youtube-dl",
-		"--format",
-		format,
-		"--get-url",
-		"--",
-		id,
-	)
-	url, err := GetStdout(cmd)
-	if err != nil {
-		return "", errors.Wrap(err, "could not get stdout")
-	}
-
-	return url, nil
-}
-
 func (y *YoutubeDl) Preview(id, dir string) (description string, info string, err error) {
 	args := []string{
 		"--skip-download",
