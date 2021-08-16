@@ -13,21 +13,6 @@ import (
 
 type YoutubeDl struct{ ExecCommand Commander }
 
-func (y *YoutubeDl) GetName(id string) (name string, err error) {
-	stdout, err := y.ExecCommand(
-		"youtube-dl",
-		"--output", "%(title)s.%(ext)s",
-		"--get-filename",
-		"--", // The '--' tells the shell that what follows after this is not an option to the command.
-		id,
-	).Output()
-	if err != nil {
-		return "", errors.Wrap(err, "could not get filename")
-	}
-	filename := strings.TrimSpace(string(stdout))
-	return filename, nil
-}
-
 func (y *YoutubeDl) GetFilenameWithFormat(id, format string) (string, error) {
 	cmd := y.ExecCommand(
 		"youtube-dl",
@@ -35,7 +20,7 @@ func (y *YoutubeDl) GetFilenameWithFormat(id, format string) (string, error) {
 		format,
 		"--output", "%(title)s_%(format_note)s.%(ext)s",
 		"--get-filename",
-		"--",
+		"--", // The '--' tells the shell that what follows after this is not an option to the command.
 		id,
 	)
 	filename, err := GetStdout(cmd)
