@@ -7,7 +7,7 @@ const Output = (props) => {
     return (
         <section className={styles["output"]}>
             <div className="inner">
-                <OutputCard videoId={props.videoId} data={props.data} />
+                <OutputCard videoId={props.videoId} data={props.data} waiting={props.waiting} />
             </div>
         </section>
     )

@@ -10,6 +10,7 @@ import './index.css'
 function App() {
   const [data, setData] = useState({ Thumbnail: "", Name: "", Formats: [] })
   const [videoId, setVideoId] = useState("")
+  const [waiting, setWaiting] = useState(false)
 
 
   useEffect(() => {
@@ -26,9 +27,11 @@ function App() {
   }, [])
 
   const inputSetVideoIdHandler = (videoId) => {
+    setWaiting(true)
     setVideoId(videoId)
     api.preview(videoId).then((res) => {
       setData(res.data)
+      setWaiting(false)
       api.updateThumbnail(videoId, res.data.Thumbnail, res.data.Name).then((res) => {
         setData((prev) => { return { ...prev, Thumbnail: res.data.Thumbnail } })
       })
@@ -60,7 +63,7 @@ function App() {
       <Header />
       <main>
         <Input videoId={videoId} onSetVideoId={inputSetVideoIdHandler} />
-        <Output videoId={videoId} data={data} />
+        <Output videoId={videoId} data={data} waiting={waiting} />
       </main>
       <Footer />
     </Fragment>
