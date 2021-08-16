@@ -18,7 +18,7 @@ const Input = (props) => {
         <section className={styles["input"]}>
             <div className="inner">
                 <div className={styles["title-container"]}>
-                    <div className={styles['title-logo']}>Dryoutube.com</div>
+                    <div className={styles['title']}>Dryoutube.com</div>
                     <div className={styles["title-desc"]}>Online Youtube Downloader</div>
                 </div>
                 <div className={styles["input-container"]}>

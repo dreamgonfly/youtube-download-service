@@ -4,7 +4,7 @@
     margin: 0 auto 0 auto;
 }
 
-.title-logo {
+.title {
     text-align: center;
     font-size: 3rem;
     font-weight: bold;
@@ -55,4 +55,13 @@
     justify-content: center;
     align-items: center;
     text-align: center;
+}
+
+@media only screen and (max-width: 980px) {
+    .input-logo {
+        display: none;
+    }
+    .input-bar {
+        width: 80%;
+    }
 }

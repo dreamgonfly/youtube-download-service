@@ -3,7 +3,8 @@
 }
 
 body {
-    margin: 0 auto;
+    min-width: fit-content;
+    block-size: fit-content;
     color: #3f464d;
     font-family: "Spoqa Han Sans Neo", "Sans-serif";
     -webkit-font-smoothing: antialiased;
