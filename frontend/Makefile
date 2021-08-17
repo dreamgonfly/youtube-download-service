@@ -12,7 +12,9 @@ build-live:
 
 deploy-beta:
 	# Exclude .DS_Store: https://stackoverflow.com/a/35210687
-	gsutil rsync -rx \..* build/ gs://youtube-download-frontend-beta
+	gsutil rsync -rx "\..*" build/ gs://youtube-download-frontend-beta
+	# https://cloud.google.com/storage/docs/metadata#cache-control
+	gsutil -m setmeta -r -h "Cache-control:no-store" gs://youtube-download-frontend-beta
 
 deploy-live:
-	gsutil rsync -rx \..* build/ gs://youtube-download-frontend-live
+	gsutil rsync -rx "\..*" build/ gs://youtube-download-frontend-live
