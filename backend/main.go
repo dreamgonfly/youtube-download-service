@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -64,7 +63,7 @@ func run() error {
 		WriteTimeout:      0, // Default value.
 	}
 
-	log.Printf("Server up & running at %s on %s environment", addr, config.Env)
+	logging.Logger.Info(fmt.Sprintf("Server up & running at %s on %s environment", addr, config.Env))
 
 	return server.ListenAndServe()
 }
