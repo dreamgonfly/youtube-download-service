@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"youtube-download-backend/internal/logging"
@@ -18,6 +20,10 @@ func HandleLogging(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		d.IPAddress = requestGetRemoteAddress(r)
+
+		bodyBytes, _ := ioutil.ReadAll(r.Body)
+		d.Body = string(bodyBytes)
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
 		// this runs handler h and captures information about
 		// HTTP request
