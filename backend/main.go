@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"youtube-download-backend/internal/config"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/logging"
 	"youtube-download-backend/internal/server"
@@ -63,7 +64,7 @@ func run() error {
 		WriteTimeout:      0, // Default value.
 	}
 
-	log.Printf("Server up & running at %s", addr)
+	log.Printf("Server up & running at %s on %s environment", addr, config.Env)
 
 	return server.ListenAndServe()
 }

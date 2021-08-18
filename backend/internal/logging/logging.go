@@ -69,6 +69,7 @@ func (l *logConfig) Info(s string) {
 			Level:    6, // info
 			Extra: map[string]interface{}{
 				"_application": "youtube-download-backend",
+				"_env":         config.Env,
 				"_localTime":   t,
 			},
 		}
@@ -102,6 +103,7 @@ func (l *logConfig) Error(err error) {
 			Level:    3, // error
 			Extra: map[string]interface{}{
 				"_application": "youtube-download-backend",
+				"_env":         config.Env,
 				"_localTime":   t,
 				"_file":        file,
 				"_line":        line,
@@ -146,6 +148,7 @@ func (l *logConfig) LogHTTP(d *HTTPRequestData) {
 			Level:    6, // info
 			Extra: map[string]interface{}{
 				"_application": "youtube-download-backend",
+				"_env":         config.Env,
 				"_method":      d.Method,
 				"_uri":         d.URI,
 				"_referer":     d.Referer,

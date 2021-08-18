@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var Config, RootDir = NewConfig()
+var Config, RootDir, Env = NewConfig()
 
 const DefaultEnv = "beta"
 
@@ -19,16 +19,15 @@ type Configuration struct {
 	LogServer string `yaml:"log_server"`
 }
 
-func NewConfig() (config *Configuration, rootDir string) {
+func NewConfig() (config *Configuration, rootDir string, env string) {
 	var c *Configuration = &Configuration{}
 
-	var env = os.Getenv("ENV")
+	env = os.Getenv("ENV")
 	if env == "" {
 		log.Printf("ENV is not set. use default (%s)", DefaultEnv)
 		env = DefaultEnv
 	}
-	log.Printf("%s environment is set", env)
-
+	
 	var _, filename, _, _ = runtime.Caller(0) // 0 means this file itself
 	rootDir = filepath.Dir(filepath.Dir(filepath.Dir(filename)))
 
@@ -41,5 +40,5 @@ func NewConfig() (config *Configuration, rootDir string) {
 	if err != nil {
 		log.Fatalf("could not unmarshal config: %v", err)
 	}
-	return c, rootDir
+	return c, rootDir, env
 }
