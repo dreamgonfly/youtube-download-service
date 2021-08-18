@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"time"
 	"youtube-download-backend/internal/gcs"
 	"youtube-download-backend/internal/httpfile"
+	"youtube-download-backend/internal/logging"
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -28,7 +28,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		id := params["id"]
 		if id == "" {
 			err := errors.New("video id is missing")
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
@@ -44,7 +44,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		tempFile, err := ioutil.TempFile("", "")
 		if err != nil {
 			err = errors.Wrap(err, "could not create temp file")
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -53,7 +53,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		u, err := url.Parse(thumbnailRequest.URL)
 		if err != nil {
 			err = errors.Wrapf(err, "could not parse thumbnail url (%s)", thumbnailRequest.URL)
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -61,7 +61,7 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		err = httpfile.DownloadFile(s.httpClient, thumbnailRequest.URL, tempFile.Name())
 		if err != nil {
 			err = errors.Wrapf(err, "could not download thumbnail url (%s)", thumbnailRequest.URL)
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -70,14 +70,14 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		err = gcs.UploadFile(s.context, s.gcsClient, tempFile.Name(), thumbnailKey)
 		if err != nil {
 			err = errors.Wrap(err, "could not upload thumbnail")
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		signedURL, err := gcs.GenerateV4GetObjectSignedURL(s.signFunc, thumbnailKey, 15*time.Minute)
 		if err != nil {
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -91,12 +91,12 @@ func (s *Server) handleUpdateThumbnail() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(output)
 		if err != nil {
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if err := tempFile.Close(); err != nil {
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

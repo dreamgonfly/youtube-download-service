@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 	. "youtube-download-backend/internal/config"
 	"youtube-download-backend/internal/gcs"
+	"youtube-download-backend/internal/logging"
 	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
@@ -24,14 +24,15 @@ func (s *Server) handlePlay() http.HandlerFunc {
 		id := params["id"]
 		if id == "" {
 			err := errors.New("video id is missing")
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 		formats, ok := r.URL.Query()["format"]
 		if !ok || len(formats) != 1 {
-			log.Println("format is missing")
-			http.Error(w, "format is missing", http.StatusBadRequest)
+			err := errors.New("format is missing")
+			logging.Logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		format := formats[0]
@@ -44,7 +45,7 @@ func (s *Server) handlePlay() http.HandlerFunc {
 			name, err := s.youtubedl.GetFilenameWithFormat(id, format)
 			if err != nil {
 				err = errors.Wrap(err, "could not get name")
-				log.Println(err)
+				logging.Logger.Error(err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -57,8 +58,7 @@ func (s *Server) handlePlay() http.HandlerFunc {
 		err := s.StreamSave(cmd, key)
 		if err != nil {
 			err = errors.Wrap(err, "could not save video")
-			log.Println(err)
-			// TODO: logging
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -76,7 +76,7 @@ func (s *Server) handlePlay() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(output)
 		if err != nil {
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

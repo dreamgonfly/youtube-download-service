@@ -15,12 +15,13 @@ var Config, RootDir = NewConfig()
 const DefaultEnv = "beta"
 
 type Configuration struct {
-	Bucket string `yaml:"bucket"`
+	Bucket    string `yaml:"bucket"`
+	LogServer string `yaml:"log_server"`
 }
 
 func NewConfig() (config *Configuration, rootDir string) {
 	var c *Configuration = &Configuration{}
-	
+
 	var env = os.Getenv("ENV")
 	if env == "" {
 		log.Printf("ENV is not set. use default (%s)", DefaultEnv)

@@ -3,10 +3,10 @@ package server
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"youtube-download-backend/internal/logging"
 	"youtube-download-backend/internal/youtubefile"
 
 	"github.com/gorilla/mux"
@@ -21,14 +21,15 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		id := params["id"]
 		if id == "" {
 			err := errors.New("video id is missing")
-			log.Println(err)
+			logging.Logger.Error(err)
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 		formats, ok := r.URL.Query()["format"]
 		if !ok || len(formats) != 1 {
-			log.Println("format is missing")
-			http.Error(w, "format is missing", http.StatusBadRequest)
+			err := errors.New("format is missing")
+			logging.Logger.Error(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		format := formats[0]
@@ -41,7 +42,7 @@ func (s *Server) handleDownload() http.HandlerFunc {
 			name, err := s.youtubedl.GetFilenameWithFormat(id, format)
 			if err != nil {
 				err = errors.Wrap(err, "could not get name")
-				log.Println(err)
+				logging.Logger.Error(err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -52,7 +53,7 @@ func (s *Server) handleDownload() http.HandlerFunc {
 		err := s.StreamDownload(cmd, filename, w)
 		if err != nil {
 			err = errors.Wrap(err, "could not download video")
-			log.Println(err)
+			logging.Logger.Error(err)
 			w.Header().Del("Content-Disposition")
 			w.Header().Del("Content-Type")
 			http.Error(w, err.Error(), http.StatusInternalServerError)

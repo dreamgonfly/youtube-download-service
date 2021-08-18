@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"youtube-download-backend/internal/gcs"
+	"youtube-download-backend/internal/logging"
 	"youtube-download-backend/internal/server"
 	"youtube-download-backend/internal/youtubefile"
 
@@ -27,6 +28,8 @@ func main() {
 }
 
 func run() error {
+	logging.InitMultiLogger()
+
 	// dependencies
 	ctx := context.Background()
 	c := youtubefile.Command
